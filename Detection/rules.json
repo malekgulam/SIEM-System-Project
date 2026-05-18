@@ -1,0 +1,26 @@
+[
+    {
+        "rule_id" : "BF-001",
+        "name" : "Brute Force Login",
+        "event_type" : "failed_login",
+        "threshold" : 5,
+        "time_window_seconds" : 60,
+        "severity" : "HIGH"
+    },
+    {
+        "rule_id" : "OHL-001",
+        "name" : "Off-Hours Login",
+        "event_type" : "successful_login",
+        "time_condition" : "00:00-05:00",
+        "severity" : "MEDIUM"
+    },
+    {
+        "rule_id" : "WS-001",
+        "name" : "Web Scanning Activity",
+        "event_type" : "web_request",
+        "status" : "404",
+        "threshold" : 10,
+        "time_window_seconds" : 30,
+        "severity" : "MEDIUM"
+    }
+]

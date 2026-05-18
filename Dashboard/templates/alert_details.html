@@ -1,0 +1,35 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<h2>Alert Details</h2>
+
+<table border="1">
+    <tr><td>Rule ID</td><td>{{ alert["rule_id"] }}</td></tr>
+    <tr><td>Event Type</td><td>{{ alert["event_type"] }}</td></tr>
+    <tr><td>Source IP</td><td>{{ alert["source_ip"] }}</td></tr>
+    <tr><td>Severity</td><td><span class="badge {{ alert['severity'] }}">{{ alert["severity"] }}</span></td></tr>
+    <tr><td>Timestamp</td><td>{{ alert["timestamp"] }}</td></tr>
+    <tr><td>Status</td><td><span class="badge {{ alert['status'] }}">{{ alert["status"] }}</span></td></tr>
+</table>
+
+<h3>Analyst Actions</h3>
+
+<form action="/alert/{{ alert['id'] }}/update" method="POST">
+    <label>Update Status:</label><br>
+    <select name="status">
+        <option value="NEW" {% if alert["status"] == "NEW" %}selected{% endif %}>NEW</option>
+        <option value="INVESTIGATING" {% if alert["status"] == "INVESTIGATING" %}selected{% endif %}>INVESTIGATING</option>
+        <option value="ESCALATED" {% if alert["status"] == "ESCALATED" %}selected{% endif %}>ESCALATED</option>
+        <option value="CLOSED" {% if alert["status"] == "CLOSED" %}selected{% endif %}>CLOSED</option>
+    </select>
+    <br><br>
+    <label>Analyst Notes:</label><br>
+    <textarea name="notes" rows="4" cols="50">{{ alert.get("notes", "") }}</textarea>
+    <br><br>
+    <button type="submit">Save</button>
+</form>
+
+<br>
+<a href="/alert" class="back-link">← Back to Alerts</a>
+
+{% endblock %}

@@ -1,0 +1,133 @@
+/* Base */
+body {
+    font-family: Arial, sans-serif;
+    background: #0f1117;
+    color: #e0e0e0;
+    margin: 0;
+    padding: 0;
+}
+
+nav {
+    background: #1a1d2e;
+    padding: 12px 24px;
+}
+
+nav a {
+    color: #7eb3ff;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.container {
+    padding: 24px;
+}
+
+/* Metric Cards */
+.cards {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.card {
+    background: #1a1d2e;
+    border-radius: 8px;
+    padding: 20px;
+    flex: 1;
+    text-align: center;
+}
+
+.card h2 {
+    font-size: 36px;
+    margin: 0;
+}
+
+.card p {
+    margin: 4px 0 0;
+    color: #aaa;
+}
+
+/* Table */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #1a1d2e;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+th {
+    background: #252840;
+    padding: 12px;
+    text-align: left;
+}
+
+td {
+    padding: 12px;
+    border-bottom: 1px solid #2a2d3e;
+}
+
+tr:hover {
+    background: #252840;
+    cursor: pointer;
+}
+
+/* Severity Badges */
+.badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.HIGH   { background: #ff4444; color: white; }
+.MEDIUM { background: #ff8800; color: white; }
+.LOW    { background: #ffcc00; color: black; }
+
+/* Status Badges */
+.NEW          { background: #1a6ef5; color: white; }
+.INVESTIGATING{ background: #ff8800; color: white; }
+.ESCALATED    { background: #ff4444; color: white; }
+.CLOSED       { background: #555;    color: white; }
+
+/* Charts */
+.charts {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.chart-box {
+    background: #1a1d2e;
+    border-radius: 8px;
+    padding: 16px;
+    flex: 1;
+}
+
+/* Filter bar */
+.filters {
+    margin-bottom: 16px;
+    display: flex;
+    gap: 12px;
+}
+
+.filters input,
+.filters select {
+    background: #1a1d2e;
+    color: #e0e0e0;
+    border: 1px solid #2a2d3e;
+    padding: 8px 12px;
+    border-radius: 6px;
+}
+
+.back-link {
+    display: inline-block;
+    margin-top: 18px;
+    color: #7eb3ff;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.back-link:hover {
+    color: #a8ccff;
+}

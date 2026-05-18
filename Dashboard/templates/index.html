@@ -1,0 +1,87 @@
+<!-- VS Code Jinja2 errors in .html files are false positives, ignore them -->
+ 
+{% extends "layout.html" %}
+{% block content %}
+
+<h2>SOC Alert Dashboard</h2>
+
+
+<div class="cards">
+    <div class="card">
+        <h2>{{ alerts|length }}</h2>
+        <p>Total Alerts</p>
+    </div>
+    <div class="card">
+        <h2>{{ alerts|selectattr("severity","equalto","HIGH")|list|length }}</h2>
+        <p>HIGH Alerts</p>
+    </div>
+    <div class="card">
+        <h2>{{ alerts|selectattr("status","equalto","NEW")|list|length }}</h2>
+        <p>NEW Alerts</p>
+    </div>
+    <div class="card">
+        <h2>{{ alerts|selectattr("status","equalto","ESCALATED")|list|length }}</h2>
+        <p>ESCALATED</p>
+    </div>
+</div>
+
+
+<div class="charts">
+    <div class="chart-box">
+        <canvas id="severityChart"></canvas>
+    </div>
+    <div class="chart-box">
+        <canvas id="ipChart"></canvas>
+    </div>
+</div>
+
+
+<div class="filters">
+    <input type="text" id="searchIP" placeholder="Search by IP...">
+    <select id="filterSeverity">
+        <option value="">All Severities</option>
+        <option value="HIGH">HIGH</option>
+        <option value="MEDIUM">MEDIUM</option>
+        <option value="LOW">LOW</option>
+    </select>
+    <select id="filterStatus">
+        <option value="">All Statuses</option>
+        <option value="NEW">NEW</option>
+        <option value="INVESTIGATING">INVESTIGATING</option>
+        <option value="ESCALATED">ESCALATED</option>
+        <option value="CLOSED">CLOSED</option>
+    </select>
+</div>
+
+
+<table id="alertTable">
+    <tr>
+        <th>Rule ID</th>
+        <th>Event Type</th>
+        <th>Source IP</th>
+        <th>Severity</th>
+        <th>Timestamp</th>
+        <th>Status</th>
+    </tr>
+    {% for alert in alerts %}
+    {% set detail_url = url_for('alert_details', alert_id=alert['id']) %}
+    <tr onclick="window.location='{{ detail_url }}';" class="alert-row"
+        data-severity="{{ alert['severity'] }}"
+        data-status="{{ alert['status'] }}"
+        data-ip="{{ alert['source_ip'] }}">
+        <td>{{ alert["rule_id"] }}</td>
+        <td>{{ alert["event_type"] }}</td>
+        <td>{{ alert["source_ip"] }}</td>
+        <td><span class="badge {{ alert['severity'] }}">{{ alert["severity"] }}</span></td>
+        <td>{{ alert["timestamp"] }}</td>
+        <td><span class="badge {{ alert['status'] }}">{{ alert["status"] }}</span></td>
+    </tr>
+    {% endfor %}
+</table>
+
+
+<script>
+const alertData = {{ alerts | tojson }};
+</script>
+
+{% endblock %}
