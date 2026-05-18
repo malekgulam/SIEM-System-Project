@@ -23,15 +23,15 @@ A Python-based mini SIEM (Security Information and Event Management) system desi
 
 ## Detection Rules
 
-## - Brute Force Login
+### - Brute Force Login
   
   - Detects multiple failed logins from same IP within time window
 
-## - Off-Hours Login
+### - Off-Hours Login
   
   - Detects successful logins between 00:00–05:00
 
-## - Web Scanning Activity
+### - Web Scanning Activity
   
   - Detects repeated HTTP 404 requests from same IP
 
@@ -46,15 +46,15 @@ A Python-based mini SIEM (Security Information and Event Management) system desi
 ## Project Workflow
 
 Log Generator
-    ↓
+↓
 Log Ingestion
-    ↓
+↓
 Parsing & Normalization
-    ↓
+↓
 Detection Engine
-    ↓
+↓
 SQLite Storage
-    ↓
+↓
 SOC Dashboard
 
 ## Dashboard Features
@@ -69,20 +69,20 @@ SOC Dashboard
 
 ## How to Run
 
-## 1. Generate logs
+### 1. Generate logs
 Run the log generator scripts:
 
 ```bash
 python Generators/auth_log_generator.py
 python Generators/access_log_generator.py
 ```
-## 2. Run Flask dashboard:
+### 2. Run Flask dashboard:
 
 ```bash
 python Dashboard/app.py
 ```
 
-## 3. Open:
+### 3. Open:
 
 http://127.0.0.1:5000/alert
 
