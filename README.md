@@ -78,7 +78,9 @@ python Generators/access_log_generator.py
 ```
 ## 2. Run Flask dashboard:
 
-python app.py
+```bash
+python Dashboard/app.py
+```
 
 ## 3. Open:
 
