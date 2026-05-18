@@ -70,6 +70,12 @@ SOC Dashboard
 ## How to Run
 
 ## 1. Generate logs
+Run the log generator scripts:
+
+```bash
+python Generators/auth_log_generator.py
+python Generators/access_log_generator.py
+```
 ## 2. Run Flask dashboard:
 
 python app.py
