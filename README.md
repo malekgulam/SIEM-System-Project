@@ -1,39 +1,29 @@
-## SIEM System Project
+# SIEM System Project
 
 A Python-based mini SIEM (Security Information and Event Management) system designed to simulate basic SOC (Security Operations Center) workflows.
 
 ## Features
 
 - Log ingestion from:
-  
   - Linux auth logs
   - Apache access logs
-
 - Regex-based parsing and normalization
-
 - Synthetic attack log generation
-
 - Detection engine with configurable rules
-
 - SQLite alert storage
-
 - Flask-based SOC dashboard
-
 - Alert status tracking and analyst notes
 
 ## Detection Rules
 
-### - Brute Force Login
-  
-  - Detects multiple failed logins from same IP within time window
+### Brute Force Login
+- Detects multiple failed logins from same IP within time window
 
-### - Off-Hours Login
-  
-  - Detects successful logins between 00:00–05:00
+### Off-Hours Login
+- Detects successful logins between 00:00–05:00
 
-### - Web Scanning Activity
-  
-  - Detects repeated HTTP 404 requests from same IP
+### Web Scanning Activity
+- Detects repeated HTTP 404 requests from same IP
 
 ## Tech Stack
 
@@ -45,16 +35,16 @@ A Python-based mini SIEM (Security Information and Event Management) system desi
 
 ## Project Workflow
 
-Log Generator
-↓
-Log Ingestion
-↓
-Parsing & Normalization
-↓
-Detection Engine
-↓
-SQLite Storage
-↓
+Log Generator  
+↓  
+Log Ingestion  
+↓  
+Parsing & Normalization  
+↓  
+Detection Engine  
+↓  
+SQLite Storage  
+↓  
 SOC Dashboard
 
 ## Dashboard Features
@@ -70,21 +60,25 @@ SOC Dashboard
 ## How to Run
 
 ### 1. Generate logs
+
 Run the log generator scripts:
 
 ```bash
 python Generators/auth_log_generator.py
 python Generators/access_log_generator.py
 ```
-### 2. Run Flask dashboard:
+
+### 2. Run Flask dashboard
 
 ```bash
 python Dashboard/app.py
 ```
 
-### 3. Open:
+### 3. Open
 
+```text
 http://127.0.0.1:5000/alert
+```
 
 ## Learning Outcome
 
