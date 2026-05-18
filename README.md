@@ -17,13 +17,13 @@ A Python-based mini SIEM (Security Information and Event Management) system desi
 ## Detection Rules
 
 ### Brute Force Login
-- Detects multiple failed logins from same IP within time window
+- Detects multiple failed logins from the same IP within a defined time window
 
 ### Off-Hours Login
 - Detects successful logins between 00:00–05:00
 
 ### Web Scanning Activity
-- Detects repeated HTTP 404 requests from same IP
+- Detects repeated HTTP 404 requests from the same IP
 
 ## Tech Stack
 
