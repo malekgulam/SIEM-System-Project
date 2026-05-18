@@ -78,10 +78,21 @@ python app.py
 
 http://127.0.0.1:5000/alert
 
-Future Improvements
+Learning Outcome
 
-- Real-time log monitoring
-- Email alerting
-- User authentication
-- More advanced correlation rules
-- REST API support
+- Built a modular Python project structure
+- Implemented log parsing and normalization
+- Created rule-based threat detection
+- Used SQLite for persistent alert storage
+- Developed a Flask dashboard for SOC workflows
+
+## Screenshots
+
+### Dashboard Overview
+![Dashboard](Screenshots/dashboard_overview.png)
+
+### Alert Queue
+![Alert Queue](Screenshots/alert_queue.png)
+
+### Alert Investigation Workflow
+![Alert Investigation](Screenshots/alert_investigation.png)
