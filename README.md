@@ -1,6 +1,8 @@
 # SIEM System Project
 
-A Python-based mini SIEM (Security Information and Event Management) system designed to simulate basic SOC (Security Operations Center) workflows.
+A Python-based SIEM (Security Information and Event Management) 
+system designed to simulate real SOC analyst workflows including 
+log analysis, threat detection, and alert triage.
 
 ## Features
 
@@ -79,14 +81,6 @@ python Dashboard/app.py
 ```text
 http://127.0.0.1:5000/alert
 ```
-
-## Learning Outcome
-
-- Built a modular Python project structure
-- Implemented log parsing and normalization
-- Created rule-based threat detection
-- Used SQLite for persistent alert storage
-- Developed a Flask dashboard for SOC workflows
 
 ## Screenshots
 
