@@ -246,20 +246,20 @@ Analysts can change the alert status and add investigation notes from the alert 
 
 ## Dashboard
 
-![Dashboard](screenshots/dashboard.png)
+![Dashboard](Screenshots/dashboard.png)
 
 ## Alert Details
 
-![Alert Details](screenshots/alert_details.png)
+![Alert Details](Screenshots/alert_details.png)
 
 ## Metrics
 
-![Metrics](screenshots/metrics.png)
+![Metrics](Screenshots/metrics.png)
 
 ## MITRE Coverage
 
-![Coverage](screenshots/coverage.png)
+![Coverage](Screenshots/coverage.png)
 
 ## Search
 
-![Search](screenshots/search.png)
+![Search](Screenshots/search.png)
