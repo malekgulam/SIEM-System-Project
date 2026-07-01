@@ -1,4 +1,4 @@
-/* Base */
+/* ── Base ─────────────────────────────────────────────── */
 body {
     font-family: Arial, sans-serif;
     background: #0f1117;
@@ -7,22 +7,45 @@ body {
     padding: 0;
 }
 
+/* ── Nav ──────────────────────────────────────────────── */
 nav {
     background: #1a1d2e;
     padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #2a2d3e;
 }
 
-nav a {
+.nav-brand {
     color: #7eb3ff;
-    text-decoration: none;
     font-weight: bold;
+    font-size: 16px;
+    letter-spacing: 1px;
 }
 
+.nav-links {
+    display: flex;
+    gap: 24px;
+}
+
+.nav-link {
+    color: #aaa;
+    text-decoration: none;
+    font-size: 14px;
+    transition: color 0.2s;
+}
+
+.nav-link:hover {
+    color: #7eb3ff;
+}
+
+/* ── Container ────────────────────────────────────────── */
 .container {
     padding: 24px;
 }
 
-/* Metric Cards */
+/* ── Metric Cards ─────────────────────────────────────── */
 .cards {
     display: flex;
     gap: 16px;
@@ -35,6 +58,7 @@ nav a {
     padding: 20px;
     flex: 1;
     text-align: center;
+    border-top: 3px solid #2a2d3e;
 }
 
 .card h2 {
@@ -45,52 +69,14 @@ nav a {
 .card p {
     margin: 4px 0 0;
     color: #aaa;
+    font-size: 13px;
 }
 
-/* Table */
-table {
-    width: 100%;
-    border-collapse: collapse;
-    background: #1a1d2e;
-    border-radius: 8px;
-    overflow: hidden;
-}
+.highlight-high     { border-top-color: #ff4444; }
+.highlight-new      { border-top-color: #1a6ef5; }
+.highlight-escalated{ border-top-color: #ff8800; }
 
-th {
-    background: #252840;
-    padding: 12px;
-    text-align: left;
-}
-
-td {
-    padding: 12px;
-    border-bottom: 1px solid #2a2d3e;
-}
-
-tr:hover {
-    background: #252840;
-    cursor: pointer;
-}
-
-/* Severity Badges */
-.badge {
-    padding: 4px 10px;
-    border-radius: 12px;
-    font-size: 12px;
-    font-weight: bold;
-}
-
-.HIGH   { background: #ff4444; color: white; }
-.MEDIUM { background: #ff8800; color: white; }
-.LOW    { background: #ffcc00; color: black; }
-
-/* Status Badges */
-.NEW          { background: #1a6ef5; color: white; }
-.INVESTIGATING{ background: #ff8800; color: white; }
-.ESCALATED    { background: #ff4444; color: white; }
-.CLOSED       { background: #555;    color: white; }
-
-/* Charts */
+/* ── Charts ───────────────────────────────────────────── */
 .charts {
     display: flex;
     gap: 16px;
@@ -104,11 +90,12 @@ tr:hover {
     flex: 1;
 }
 
-/* Filter bar */
+/* ── Filters ──────────────────────────────────────────── */
 .filters {
     margin-bottom: 16px;
     display: flex;
     gap: 12px;
+    flex-wrap: wrap;
 }
 
 .filters input,
@@ -118,14 +105,225 @@ tr:hover {
     border: 1px solid #2a2d3e;
     padding: 8px 12px;
     border-radius: 6px;
+    font-size: 13px;
+}
+
+/* ── Tables ───────────────────────────────────────────── */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #1a1d2e;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 24px;
+}
+
+th {
+    background: #252840;
+    padding: 12px;
+    text-align: left;
+    font-size: 13px;
+    color: #aaa;
+}
+
+td {
+    padding: 12px;
+    border-bottom: 1px solid #2a2d3e;
+    font-size: 13px;
+}
+
+tr:hover {
+    background: #252840;
+    cursor: pointer;
+}
+
+/* ── Severity Badges ──────────────────────────────────── */
+.badge {
+    padding: 4px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: bold;
+}
+
+.HIGH     { background: #ff4444; color: white; }
+.MEDIUM   { background: #ff8800; color: white; }
+.LOW      { background: #ffcc00; color: black; }
+.CRITICAL { background: #cc00ff; color: white; }
+
+/* ── Status Badges ────────────────────────────────────── */
+.NEW          { background: #1a6ef5; color: white; }
+.INVESTIGATING{ background: #ff8800; color: white; }
+.ESCALATED    { background: #ff4444; color: white; }
+.CLOSED       { background: #555;    color: white; }
+
+/* ── MITRE Badge ──────────────────────────────────────── */
+.mitre-badge {
+    background: #1e3a5f;
+    color: #7eb3ff;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: bold;
+    font-family: monospace;
+}
+
+/* ── Alert Details Page ───────────────────────────────── */
+.details-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.details-header h2 {
+    margin: 0;
+    flex: 1;
+}
+
+.details-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.details-card {
+    background: #1a1d2e;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 24px;
+}
+
+.details-card h3 {
+    margin: 0 0 16px 0;
+    font-size: 14px;
+    color: #aaa;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.details-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: transparent;
+    margin-bottom: 0;
+}
+
+.details-table td {
+    padding: 8px 12px;
+    border-bottom: 1px solid #2a2d3e;
+    font-size: 13px;
+}
+
+.details-table td:first-child {
+    color: #aaa;
+    width: 140px;
+}
+
+.mitre-card {
+    border-left: 3px solid #7eb3ff;
+}
+
+.raw-card {
+    margin-bottom: 24px;
+}
+
+.raw-log {
+    background: #0a0d14;
+    color: #7eb3ff;
+    padding: 16px;
+    border-radius: 6px;
+    font-family: monospace;
+    font-size: 12px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+    margin: 0;
+}
+
+/* ── Analyst Form ─────────────────────────────────────── */
+.form-group {
+    margin-bottom: 16px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 13px;
+    color: #aaa;
+    margin-bottom: 6px;
+}
+
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    background: #0f1117;
+    color: #e0e0e0;
+    border: 1px solid #2a2d3e;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 13px;
+    box-sizing: border-box;
+}
+
+.form-group textarea {
+    resize: vertical;
+    font-family: Arial, sans-serif;
+}
+
+.btn-save {
+    background: #1a6ef5;
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 6px;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.btn-save:hover {
+    background: #1558cc;
+}
+
+/* ── Coverage Page ────────────────────────────────────── */
+.tactic-block {
+    margin-bottom: 32px;
+}
+
+.tactic-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #1a1d2e;
+    padding: 12px 16px;
+    border-radius: 8px 8px 0 0;
+    border-left: 4px solid #7eb3ff;
+    margin-bottom: 0;
+}
+
+.tactic-name {
+    font-weight: bold;
+    font-size: 14px;
+    color: #e0e0e0;
+}
+
+.tactic-count {
+    font-size: 12px;
+    color: #aaa;
+}
+
+/* ── Misc ─────────────────────────────────────────────── */
+.empty-msg {
+    color: #aaa;
+    font-size: 14px;
+    margin-top: 32px;
 }
 
 .back-link {
     display: inline-block;
-    margin-top: 18px;
+    margin-top: 8px;
     color: #7eb3ff;
     text-decoration: none;
-    font-weight: bold;
+    font-size: 13px;
 }
 
 .back-link:hover {

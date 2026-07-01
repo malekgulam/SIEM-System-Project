@@ -3,15 +3,16 @@ from pathlib import Path
 import json
 from datetime import datetime
 
-project_root = Path(__file__).parent.parent
-sys.path.append(str(project_root))
+sys.path.append(str(Path(__file__).parent.parent))
 
+from config import RULES_PATH
 from Parsing.normalization import normalize_events
 
-RULES_PATH = Path("C:/Users/msi-ninja/Documents/Projects/SIEM_System_Project/Detection/rules.json")
-
-MONTHS = {"Jan":1, "Feb":2, "Mar":3, "Apr":4, "May":5, "Jun":6,
-          "Jul":7, "Aug":8, "Sep":9, "Oct":10, "Nov":11, "Dec":12}
+MONTHS = {
+    "Jan": 1, "Feb": 2, "Mar": 3, "Apr": 4,
+    "May": 5, "Jun": 6, "Jul": 7, "Aug": 8,
+    "Sep": 9, "Oct": 10, "Nov": 11, "Dec": 12
+}
 
 def parse_timestamp_auth(ts):
     parts = ts.split()
@@ -26,10 +27,8 @@ def parse_timestamp_access(ts):
     day = int(parts[0])
     time_parts = parts[2].split(":")
     year = int(time_parts[0])
-    time_values = time_parts[1],time_parts[2],time_parts[3]
-    h,m,s = map(int,time_values)
-    return datetime(year,month,day,h,m,s)
-
+    h, m, s = map(int, time_parts[1:4])
+    return datetime(year, month, day, h, m, s)
 
 def detect_bruteforce(events, rule):
     threshold = rule["threshold"]
@@ -41,66 +40,74 @@ def detect_bruteforce(events, rule):
     if not failed_events:
         return alerts
 
-    failed_events.sort(key=lambda e: (e["source_ip"], parse_timestamp_auth(e["timestamp"])))
-
     ip_events = {}
     for e in failed_events:
         ip_events.setdefault(e["source_ip"], []).append(e)
 
-    ip_last_alert = {}
-
     for ip, ev_list in ip_events.items():
+        ev_list.sort(key=lambda e: parse_timestamp_auth(e["timestamp"]))
         times = [parse_timestamp_auth(e["timestamp"]) for e in ev_list]
+        ip_last_alert = None
+
         for i, start_time in enumerate(times):
-            if ip in ip_last_alert:
-                if (start_time - ip_last_alert[ip]).total_seconds() < cooldown_sec:
-                    continue
-            count = 1
-            for j in range(i+1, len(times)):
-                if (times[j] - start_time).total_seconds() <= window_sec:
-                    count += 1
-                else:
-                    break
+            if ip_last_alert and (start_time - ip_last_alert).total_seconds() < cooldown_sec:
+                continue
+            count = sum(
+                1 for j in range(i + 1, len(times))
+                if (times[j] - start_time).total_seconds() <= window_sec
+            ) + 1
+
             if count >= threshold:
                 alerts.append({
                     "rule_id": rule["rule_id"],
-                    "event_type": "failed_login",
+                    "rule_name": rule["name"],
+                    "event_type": rule["event_type"],
                     "source_ip": ip,
+                    "user": ev_list[i].get("user"),
                     "severity": rule["severity"],
                     "timestamp": ev_list[i]["timestamp"],
-                    "status": "NEW"
+                    "status": "NEW",
+                    "raw_event": ev_list[i]["raw"],
+                    "technique_id": rule["technique_id"],
+                    "tactic": rule["tactic"]
                 })
-                ip_last_alert[ip] = start_time
+                ip_last_alert = start_time
     return alerts
 
-def detect_offhour(events,rule):
+def detect_offhours(events, rule):
     time_condition = rule["time_condition"]
     alerts = []
-    rule_parts = time_condition.split("-")
-    rule_start = datetime.strptime(rule_parts[0],"%H:%M")
-    rule_end = datetime.strptime(rule_parts[1], "%H:%M")
 
+    rule_parts = time_condition.split("-")
+    rule_start = datetime.strptime(rule_parts[0], "%H:%M")
+    rule_end = datetime.strptime(rule_parts[1], "%H:%M")
     start_minute = rule_start.hour * 60 + rule_start.minute
     end_minute = rule_end.hour * 60 + rule_end.minute
-    successful_logins = [e for e in events if e["event_type"] == rule["event_type"]]
 
+    successful_logins = [e for e in events if e["event_type"] == rule["event_type"]]
     if not successful_logins:
         return alerts
+
     for event in successful_logins:
         dt = parse_timestamp_auth(event["timestamp"])
         event_minute = dt.hour * 60 + dt.minute
         if start_minute <= event_minute <= end_minute:
             alerts.append({
-                    "rule_id": rule["rule_id"],
-                    "event_type": "successful_login",
-                    "source_ip": event["source_ip"],
-                    "severity": rule["severity"],
-                    "timestamp": event["timestamp"],
-                    "status": "NEW"
-                })
+                "rule_id": rule["rule_id"],
+                "rule_name": rule["name"],
+                "event_type": rule["event_type"],
+                "source_ip": event["source_ip"],
+                "user": event.get("user"),
+                "severity": rule["severity"],
+                "timestamp": event["timestamp"],
+                "status": "NEW",
+                "raw_event": event["raw"],
+                "technique_id": rule["technique_id"],
+                "tactic": rule["tactic"]
+            })
     return alerts
-        
-def detect_webscan(events,rule):
+
+def detect_webscan(events, rule):
     threshold = rule["threshold"]
     window_sec = rule["time_window_seconds"]
     cooldown_sec = 300
@@ -109,49 +116,135 @@ def detect_webscan(events,rule):
     web_events = [e for e in events if e["event_type"] == rule["event_type"] and e["status"] == rule["status"]]
     if not web_events:
         return alerts
-    
+
     ip_events = {}
     for e in web_events:
         ip_events.setdefault(e["source_ip"], []).append(e)
-    
-    ip_last_alert = {}
 
     for ip, ev_list in ip_events.items():
         times = [parse_timestamp_access(e["timestamp"]) for e in ev_list]
+        ip_last_alert = None
 
         for i, start_time in enumerate(times):
-            if ip in ip_last_alert:
-                if (start_time - ip_last_alert[ip]).total_seconds() < cooldown_sec:
-                    continue
-            count = 1
-            for j in range(i+1, len(times)):
-                if (times[j] - start_time).total_seconds() <= window_sec:
-                    count += 1
-                else:
-                    break
+            if ip_last_alert and (start_time - ip_last_alert).total_seconds() < cooldown_sec:
+                continue
+            count = sum(
+                1 for j in range(i + 1, len(times))
+                if (times[j] - start_time).total_seconds() <= window_sec
+            ) + 1
+
             if count >= threshold:
                 alerts.append({
                     "rule_id": rule["rule_id"],
-                    "event_type": "web_request",
+                    "rule_name": rule["name"],
+                    "event_type": rule["event_type"],
                     "source_ip": ip,
+                    "user": ev_list[i].get("user"),
                     "severity": rule["severity"],
                     "timestamp": ev_list[i]["timestamp"],
-                    "status": "NEW"
+                    "status": "NEW",
+                    "raw_event": ev_list[i]["raw"],
+                    "technique_id": rule["technique_id"],
+                    "tactic": rule["tactic"]
                 })
-                ip_last_alert[ip] = start_time
-    
+                ip_last_alert = start_time
     return alerts
+
+def detect_privesc(events, rule):
+    alerts = []
+
+    sudo_events = [e for e in events if e["event_type"] == rule["event_type"]]
+    if not sudo_events:
+        return alerts
+
+    for event in sudo_events:
+        alerts.append({
+            "rule_id": rule["rule_id"],
+            "rule_name": rule["name"],
+            "event_type": rule["event_type"],
+            "source_ip": event["source_ip"],
+            "user": event.get("user"),
+            "severity": rule["severity"],
+            "timestamp": event["timestamp"],
+            "status": "NEW",
+            "raw_event": event["raw"],
+            "technique_id": rule["technique_id"],
+            "tactic": rule["tactic"]
+        })
+    return alerts
+
+def detect_credstuffing(events, rule):
+    threshold = rule["threshold"]
+    window_sec = rule["time_window_seconds"]
+    cooldown_sec = 300
+    alerts = []
+
+    failed_events = [
+        e for e in events
+        if e["event_type"] == rule["event_type"] and e["source_ip"] and e.get("user")
+    ]
+    if not failed_events:
+        return alerts
+
+    ip_events = {}
+    for e in failed_events:
+        ip_events.setdefault(e["source_ip"], []).append(e)
+
+    for ip, ev_list in ip_events.items():
+        ev_list.sort(key=lambda e: parse_timestamp_auth(e["timestamp"]))
+        times = [parse_timestamp_auth(e["timestamp"]) for e in ev_list]
+        ip_last_alert = None
+
+        for i, start_time in enumerate(times):
+            if ip_last_alert and (start_time - ip_last_alert).total_seconds() < cooldown_sec:
+                continue
+
+            window_events = [
+                ev_list[j] for j in range(i, len(times))
+                if (times[j] - start_time).total_seconds() <= window_sec
+            ]
+            unique_users = set(e["user"] for e in window_events if e.get("user"))
+
+            if len(unique_users) >= threshold:
+                alerts.append({
+                    "rule_id": rule["rule_id"],
+                    "rule_name": rule["name"],
+                    "event_type": rule["event_type"],
+                    "source_ip": ip,
+                    "user": ", ".join(unique_users),
+                    "severity": rule["severity"],
+                    "timestamp": ev_list[i]["timestamp"],
+                    "status": "NEW",
+                    "raw_event": ev_list[i]["raw"],
+                    "technique_id": rule["technique_id"],
+                    "tactic": rule["tactic"]
+                })
+                ip_last_alert = start_time
+    return alerts
+
+RULE_DISPATCHER = {
+    "bruteforce": detect_bruteforce,
+    "offhours": detect_offhours,
+    "webscan": detect_webscan,
+    "privesc": detect_privesc,
+    "credstuffing": detect_credstuffing
+}
+
 def detection_engine():
     try:
-       rules = json.loads(RULES_PATH.read_text())
-       events = normalize_events()
-       alerts = []
-       bruteforce_rule = next((r for r in rules if r["rule_id"] == "BF-001"), None)
-       offhour_rule = next((r for r in rules if r["rule_id"] == "OHL-001"), None)
-       webscan_rule = next((r for r in rules if r["rule_id"] == "WS-001"), None)
-       alerts.extend(detect_bruteforce(events, bruteforce_rule) if bruteforce_rule else [])
-       alerts.extend(detect_offhour(events, offhour_rule) if offhour_rule else [])
-       alerts.extend(detect_webscan(events, webscan_rule) if webscan_rule else [])
-       return alerts
+        rules = json.loads(RULES_PATH.read_text())
+        events = normalize_events()
+        alerts = []
+
+        for rule in rules:
+            rule_type = rule.get("rule_type")
+            detector = RULE_DISPATCHER.get(rule_type)
+            if detector:
+                alerts.extend(detector(events, rule))
+            else:
+                print(f"No detector found for rule_type: {rule_type}")
+
+        return alerts
     except Exception as e:
-        print(f"Error : {e}")
+        print(f"Detection engine error: {e}")
+        return []

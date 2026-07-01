@@ -1,0 +1,69 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<h2>Detection Metrics</h2>
+
+{% if not metrics %}
+<p class="empty-msg">No alerts in database yet. Run the pipeline from the dashboard first.</p>
+{% else %}
+
+<div class="cards">
+    <div class="card">
+        <h2>{{ metrics | sum(attribute='total') }}</h2>
+        <p>Total Alerts</p>
+    </div>
+    <div class="card highlight-high">
+        <h2>{{ metrics | sum(attribute='high_count') }}</h2>
+        <p>HIGH Alerts</p>
+    </div>
+    <div class="card highlight-new">
+        <h2>{{ metrics | sum(attribute='new_count') }}</h2>
+        <p>Unreviewed</p>
+    </div>
+    <div class="card highlight-escalated">
+        <h2>{{ metrics | sum(attribute='closed_count') }}</h2>
+        <p>Closed</p>
+    </div>
+</div>
+
+<div class="charts">
+    <div class="chart-box">
+        <canvas id="ruleChart"></canvas>
+    </div>
+    <div class="chart-box">
+        <canvas id="statusChart"></canvas>
+    </div>
+</div>
+
+<table id="metricsTable">
+    <tr>
+        <th>Rule ID</th>
+        <th>Rule Name</th>
+        <th>Technique</th>
+        <th>Tactic</th>
+        <th>Total Fired</th>
+        <th>HIGH</th>
+        <th>Unreviewed</th>
+        <th>Closed</th>
+    </tr>
+    {% for row in metrics %}
+    <tr>
+        <td>{{ row["rule_id"] }}</td>
+        <td>{{ row["rule_name"] }}</td>
+        <td><span class="mitre-badge">{{ row["technique_id"] }}</span></td>
+        <td>{{ row["tactic"] }}</td>
+        <td>{{ row["total"] }}</td>
+        <td>{{ row["high_count"] }}</td>
+        <td>{{ row["new_count"] }}</td>
+        <td>{{ row["closed_count"] }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<script>
+const metricsData = {{ metrics | tojson }};
+</script>
+
+{% endif %}
+
+{% endblock %}

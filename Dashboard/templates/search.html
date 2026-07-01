@@ -1,0 +1,55 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<h2>Search Alerts</h2>
+
+<form action="{{ url_for('search') }}" method="GET">
+    <div class="filters">
+        <input type="text" name="q" value="{{ query }}" placeholder="Search by IP, Rule ID, Rule Name, Technique...">
+        <button type="submit" class="btn-save">Search</button>
+    </div>
+</form>
+
+{% if query %}
+    <p style="color: #aaa; font-size: 13px; margin-bottom: 16px;">
+        {{ alerts | length }} result{{ 's' if alerts | length != 1 else '' }} for <strong style="color: #7eb3ff;">{{ query }}</strong>
+    </p>
+{% endif %}
+
+{% if alerts %}
+<table>
+    <tr>
+        <th>Rule ID</th>
+        <th>Rule Name</th>
+        <th>Source IP</th>
+        <th>User</th>
+        <th>Technique</th>
+        <th>Tactic</th>
+        <th>Severity</th>
+        <th>Timestamp</th>
+        <th>Status</th>
+    </tr>
+    {% for alert in alerts %}
+    {% set detail_url = url_for('alert_details', alert_id=alert['id']) %}
+    <tr onclick="window.location='{{ detail_url }}';" style="cursor: pointer;">
+        <td>{{ alert["rule_id"] }}</td>
+        <td>{{ alert["rule_name"] }}</td>
+        <td>{{ alert["source_ip"] }}</td>
+        <td>{{ alert["user"] or "-" }}</td>
+        <td><span class="mitre-badge">{{ alert["technique_id"] }}</span></td>
+        <td>{{ alert["tactic"] }}</td>
+        <td><span class="badge {{ alert['severity'] }}">{{ alert["severity"] }}</span></td>
+        <td>{{ alert["timestamp"] }}</td>
+        <td><span class="badge {{ alert['status'] }}">{{ alert["status"] }}</span></td>
+    </tr>
+    {% endfor %}
+</table>
+
+{% elif query %}
+<p class="empty-msg">No alerts found matching <strong>{{ query }}</strong>.</p>
+
+{% else %}
+<p class="empty-msg">Enter a search term above to find alerts.</p>
+{% endif %}
+
+{% endblock %}

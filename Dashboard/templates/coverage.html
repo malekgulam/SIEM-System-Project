@@ -1,0 +1,65 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<h2>Rule Coverage Summary</h2>
+
+{% if not tactics %}
+<p class="empty-msg">No alerts in database yet. Run the pipeline from the dashboard first.</p>
+{% else %}
+
+<div class="cards">
+    <div class="card">
+        <h2>{{ tactics | length }}</h2>
+        <p>Tactics Covered</p>
+    </div>
+    <div class="card">
+        <h2>{% set total_rules = namespace(count=0) %}{% for t, rules in tactics.items() %}{% set total_rules.count = total_rules.count + rules|length %}{% endfor %}{{ total_rules.count }}</h2>
+        <p>Rules Active</p>
+    </div>
+    <div class="card">
+        <h2>{{ tactics.values() | list | sum(attribute='length') if false else tactics | length }}</h2>
+        <p>Log Sources</p>
+    </div>
+</div>
+
+<div class="charts">
+    <div class="chart-box">
+        <canvas id="coverageChart"></canvas>
+    </div>
+</div>
+
+{% for tactic, rules in tactics.items() %}
+<div class="tactic-block">
+
+    <div class="tactic-header">
+        <span class="tactic-name">{{ tactic }}</span>
+        <span class="tactic-count">{{ rules | length }} rule{{ 's' if rules | length > 1 else '' }}</span>
+    </div>
+
+    <table class="details-table">
+        <tr>
+            <th>Rule ID</th>
+            <th>Rule Name</th>
+            <th>Technique ID</th>
+            <th>Alerts Fired</th>
+        </tr>
+        {% for rule in rules %}
+        <tr>
+            <td>{{ rule["rule_id"] }}</td>
+            <td>{{ rule["rule_name"] }}</td>
+            <td><span class="mitre-badge">{{ rule["technique_id"] }}</span></td>
+            <td>{{ rule["total"] }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+
+</div>
+{% endfor %}
+
+<script>
+const tacticsData = {{ tactics | tojson }};
+</script>
+
+{% endif %}
+
+{% endblock %}

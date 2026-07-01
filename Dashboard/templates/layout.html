@@ -8,7 +8,13 @@
 <body>
 
 <nav>
-    <a href="/alert">Alert Queue</a>
+    <span class="nav-brand">SIEM Platform</span>
+    <div class="nav-links">
+        <a href="{{ url_for('home') }}" class="nav-link">Dashboard</a>
+        <a href="{{ url_for('metrics') }}" class="nav-link">Metrics</a>
+        <a href="{{ url_for('coverage') }}" class="nav-link">Coverage</a>
+        <a href="{{ url_for('search') }}" class="nav-link">Search</a>
+    </div>
 </nav>
 
 <div class="container">
