@@ -1,25 +1,63 @@
 SIEM System Project
 
-A Python-based Security Information and Event Management (SIEM) platform built with Python and Flask that simulates a Security Operations Center (SOC) workflow. The platform ingests Linux authentication and Apache access logs, normalizes events into a common schema, executes MITRE ATT&CK–mapped detection rules, stores alerts and supporting evidence, and provides a web dashboard for alert investigation, metrics, and analyst workflows.
+A Python and Flask-based Security Information and Event Management (SIEM) platform that simulates a Security Operations Center (SOC) workflow. The platform ingests Linux authentication and Apache access logs, normalizes events into a common event format, executes JSON-based detection rules, stores alerts in SQLite, and provides a web dashboard for alert investigation, analyst workflow, detection metrics, and MITRE ATT&CK coverage.
 
 Table of Contents
 
-- Overview
-- Screenshots
 - Features
 - Architecture
+- Screenshots
 - Supported Log Sources
 - Detection Rules
-- Dashboard
 - Project Structure
 - Installation
 - Usage
 - Dashboard Routes
+- Alert Workflow
 - Technologies
 
-Overview
+---
 
-The platform simulates a simplified SOC pipeline:
+Features
+
+Log Processing
+
+- Read Linux authentication logs ("auth.log")
+- Read Apache access logs ("access.log")
+- Parse and normalize logs into a common event format
+- Generate synthetic log data for testing
+
+Detection Engine
+
+- JSON-based detection rule repository
+- MITRE ATT&CK mapped detection rules
+- Duplicate alert prevention
+- Alert-to-event relationship tracking
+- SQLite alert storage
+
+Investigation
+
+- Alert status management
+- Analyst investigation notes
+- Raw log evidence
+- Linked triggering events
+- Search by IP address, rule ID, rule name, or MITRE technique
+
+Dashboard & Reporting
+
+- Alert overview dashboard
+- Detection metrics
+- MITRE ATT&CK coverage
+- Severity distribution
+- Top source IPs
+- Tactic breakdown
+- Alert filtering and search
+
+---
+
+Architecture
+
+The platform processes logs through a simple SOC pipeline.
 
 Logs
    │
@@ -41,176 +79,205 @@ Generate Alert
    ▼
 Investigate
 
-Alerts are linked to the normalized events that triggered them, allowing analysts to investigate detections using both parsed event data and the original raw log entries.
+Normalized events and generated alerts are stored separately. Each alert maintains links to the events that triggered it while also preserving the original raw log for investigation.
+
+---
 
 Screenshots
 
-Place screenshots near the top so visitors immediately understand what the project looks like.
-
 Dashboard
 
-![Dashboard](Screenshots/dashboard.png)
+"Dashboard" (Screenshots/dashboard.png)
 
 Alert Details
 
-![Alert Details](Screenshots/alert_details.png)
+"Alert Details" (Screenshots/alert_details.png)
 
 Detection Metrics
 
-![Metrics](Screenshots/metrics.png)
+"Metrics" (Screenshots/metrics.png)
 
-MITRE Coverage
+MITRE ATT&CK Coverage
 
-![Coverage](Screenshots/coverage.png)
+"Coverage" (Screenshots/coverage.png)
 
 Search
 
-![Search](Screenshots/search.png)
+"Search" (Screenshots/search.png)
 
-Features
-
-Log Processing
-
-- Linux authentication log ingestion
-- Apache access log ingestion
-- Event parsing
-- Event normalization
-- Synthetic log generation
-
-Detection Engine
-
-- JSON-based rule repository
-- MITRE ATT&CK mapped detections
-- Configurable detection engine
-- Duplicate alert prevention
-- Alert-to-event relationship tracking
-
-Investigation
-
-- Alert lifecycle management
-- Analyst notes
-- Linked triggering events
-- Raw log evidence
-- Search by IP, rule, or MITRE technique
-
-Reporting
-
-- Detection metrics
-- MITRE ATT&CK coverage
-- Severity statistics
-- Tactic distribution
-- Dashboard visualizations
-
-Architecture
-
-The application consists of independent modules for ingestion, parsing, detection, storage, and visualization.
-
-Generators
-      │
-      ▼
-Ingestion
-      │
-      ▼
-Parsing
-      │
-      ▼
-Normalization
-      │
-      ▼
-Detection Engine
-      │
-      ▼
-SQLite
-      │
-      ▼
-Flask Dashboard
+---
 
 Supported Log Sources
 
-Linux Authentication Logs
+Linux Authentication Logs ("auth.log")
+
+The system processes events such as:
 
 - SSH failed logins
 - SSH successful logins
-- sudo execution
+- sudo command execution
 - su activity
 
-Apache Access Logs
+Apache Access Logs ("access.log")
+
+The system processes:
 
 - HTTP requests
-- Status codes
+- HTTP response status codes
 - Requested URLs
 - Source IP addresses
 
+---
+
 Detection Rules
 
-Rule ID| Rule Name| MITRE ATT&CK| Tactic| Trigger
-BF-001| SSH Brute Force| T1110| Credential Access| Five or more failed SSH logins from the same source IP within 60 seconds
-OHL-001| Off-Hours Login| T1078| Defense Evasion| Successful SSH login between 00:00 and 05:00
-WS-001| Web Scanning Activity| T1595| Reconnaissance| Ten or more HTTP 404 responses from the same source IP within 30 seconds
-PFS-001| Privilege Escalation via sudo| T1548| Privilege Escalation| Detects execution of privileged commands using "sudo"
-CSF-001| Credential Stuffing| T1110.004| Credential Access| Failed logins against three or more different usernames from the same source IP within 60 seconds
+Rule ID| Rule Name| MITRE Technique| Tactic| Trigger
+BF-001| SSH Brute Force| T1110| Credential Access| Five or more failed SSH logins from one IP within 60 seconds
+OHL-001| Off-Hours Login| T1078| Defense Evasion| Successful login between 00:00 and 05:00
+WS-001| Web Scanning Activity| T1595| Reconnaissance| Ten or more HTTP 404 responses from one IP within 30 seconds
+PFS-001| Privilege Escalation via sudo| T1548| Privilege Escalation| Any sudo command execution
+CSF-001| Credential Stuffing| T1110.004| Credential Access| Failed logins for three or more different usernames from one IP within 60 seconds
 
-Detection rules are defined in "Detection/rules.json". Each rule contains metadata such as the rule ID, rule type, severity, MITRE ATT&CK technique, and tactic. The detection engine uses this metadata to dispatch detections while keeping rule configuration separate from the detection logic.
+Detection rules are defined in "Detection/rules.json" and include rule metadata such as rule ID, rule type, severity, MITRE ATT&CK technique, and tactic.
 
-Dashboard
-
-Main Dashboard
-
-- Alert overview
-- Severity distribution
-- Top source IPs
-- MITRE tactic distribution
-- Alert filtering
-
-Alert Investigation
-
-- Alert metadata
-- Linked events
-- Raw log
-- MITRE ATT&CK information
-- Analyst notes
-- Status updates
-
-Detection Metrics
-
-- Total alerts per rule
-- High-severity alerts
-- Closed alerts
-- Unreviewed alerts
-
-MITRE Coverage
-
-Displays implemented detections grouped by ATT&CK tactic.
-
-Search
-
-Search alerts using:
-
-- IP address
-- Rule ID
-- Rule name
-- MITRE technique
+---
 
 Project Structure
 
-(Keep your existing folder tree.)
+SIEM-System-Project/
+│
+├── config.py
+├── requirements.txt
+│
+├── Data/
+│   └── Logs/
+│       ├── auth.log
+│       └── access.log
+│
+├── Generators/
+│   ├── auth_log_generator.py
+│   └── access_log_generator.py
+│
+├── Ingestion/
+│   └── reader.py
+│
+├── Parsing/
+│   ├── parser.py
+│   └── normalization.py
+│
+├── Detection/
+│   ├── engine.py
+│   └── rules.json
+│
+├── Storage/
+│   └── store.py
+│
+└── Dashboard/
+    ├── app.py
+    ├── static/
+    │   ├── style.css
+    │   └── script.js
+    │
+    └── templates/
+        ├── layout.html
+        ├── index.html
+        ├── alert_details.html
+        ├── metrics.html
+        ├── coverage.html
+        ├── search.html
+        └── 404.html
+
+---
 
 Installation
 
-(Keep your existing installation instructions.)
+Clone the repository:
+
+git clone <your-repository-url>
+cd SIEM-System-Project
+
+Create a virtual environment:
+
+python -m venv .venv
+
+Activate the virtual environment.
+
+Windows
+
+.venv\Scripts\activate
+
+Linux / macOS
+
+source .venv/bin/activate
+
+Install dependencies:
+
+pip install -r requirements.txt
+
+---
 
 Usage
 
-(Keep your existing usage instructions.)
+1. Generate Sample Logs
+
+python Generators/auth_log_generator.py
+python Generators/access_log_generator.py
+
+2. Start the Dashboard
+
+python Dashboard/app.py
+
+3. Open the Application
+
+http://127.0.0.1:5000
+
+When the dashboard starts, the application automatically:
+
+- Reads log files
+- Parses log events
+- Normalizes events
+- Executes all detection rules
+- Stores newly generated alerts
+- Links alerts to the events that triggered them
+
+Existing alerts are not duplicated when the application runs again.
+
+---
 
 Dashboard Routes
 
-(Keep your existing route table.)
+Route| Description
+"/"| Main dashboard with alerts, charts, filters, and statistics
+"/alert/<id>"| Alert details, linked events, raw log, MITRE information, status updates, and analyst notes
+"/metrics"| Detection statistics for each rule
+"/coverage"| MITRE ATT&CK tactic and technique coverage
+"/search"| Search alerts by IP address, rule ID, rule name, or MITRE technique
+
+---
+
+Alert Workflow
+
+Each alert follows the investigation workflow below.
+
+NEW
+   │
+   ▼
+INVESTIGATING
+   │
+   ▼
+ESCALATED
+   │
+   ▼
+CLOSED
+
+Analysts can update the alert status and record investigation notes from the Alert Details page.
+
+---
 
 Technologies
 
 - Python 3.10+
 - Flask
-- SQLite
+- SQLite3
 - Jinja2
 - Chart.js
