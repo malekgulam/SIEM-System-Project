@@ -34,11 +34,11 @@ def detect_bruteforce(events, rule):
     threshold = rule["threshold"]
     window_sec = rule["time_window_seconds"]
     cooldown_sec = 300
-    alerts = []
+    results = []
 
     failed_events = [e for e in events if e["event_type"] == rule["event_type"] and e["source_ip"]]
     if not failed_events:
-        return alerts
+        return results
 
     ip_events = {}
     for e in failed_events:
@@ -52,13 +52,14 @@ def detect_bruteforce(events, rule):
         for i, start_time in enumerate(times):
             if ip_last_alert and (start_time - ip_last_alert).total_seconds() < cooldown_sec:
                 continue
-            count = sum(
-                1 for j in range(i + 1, len(times))
-                if (times[j] - start_time).total_seconds() <= window_sec
-            ) + 1
 
-            if count >= threshold:
-                alerts.append({
+            window_events = [
+                ev_list[j] for j in range(i, len(times))
+                if (times[j] - start_time).total_seconds() <= window_sec
+            ]
+
+            if len(window_events) >= threshold:
+                alert = {
                     "rule_id": rule["rule_id"],
                     "rule_name": rule["name"],
                     "event_type": rule["event_type"],
@@ -70,13 +71,15 @@ def detect_bruteforce(events, rule):
                     "raw_event": ev_list[i]["raw"],
                     "technique_id": rule["technique_id"],
                     "tactic": rule["tactic"]
-                })
+                }
+                results.append((alert, window_events))
                 ip_last_alert = start_time
-    return alerts
+
+    return results
 
 def detect_offhours(events, rule):
     time_condition = rule["time_condition"]
-    alerts = []
+    results = []
 
     rule_parts = time_condition.split("-")
     rule_start = datetime.strptime(rule_parts[0], "%H:%M")
@@ -86,13 +89,13 @@ def detect_offhours(events, rule):
 
     successful_logins = [e for e in events if e["event_type"] == rule["event_type"]]
     if not successful_logins:
-        return alerts
+        return results
 
     for event in successful_logins:
         dt = parse_timestamp_auth(event["timestamp"])
         event_minute = dt.hour * 60 + dt.minute
         if start_minute <= event_minute <= end_minute:
-            alerts.append({
+            alert = {
                 "rule_id": rule["rule_id"],
                 "rule_name": rule["name"],
                 "event_type": rule["event_type"],
@@ -104,18 +107,20 @@ def detect_offhours(events, rule):
                 "raw_event": event["raw"],
                 "technique_id": rule["technique_id"],
                 "tactic": rule["tactic"]
-            })
-    return alerts
+            }
+            results.append((alert, [event]))
+
+    return results
 
 def detect_webscan(events, rule):
     threshold = rule["threshold"]
     window_sec = rule["time_window_seconds"]
     cooldown_sec = 300
-    alerts = []
+    results = []
 
     web_events = [e for e in events if e["event_type"] == rule["event_type"] and e["status"] == rule["status"]]
     if not web_events:
-        return alerts
+        return results
 
     ip_events = {}
     for e in web_events:
@@ -128,13 +133,14 @@ def detect_webscan(events, rule):
         for i, start_time in enumerate(times):
             if ip_last_alert and (start_time - ip_last_alert).total_seconds() < cooldown_sec:
                 continue
-            count = sum(
-                1 for j in range(i + 1, len(times))
-                if (times[j] - start_time).total_seconds() <= window_sec
-            ) + 1
 
-            if count >= threshold:
-                alerts.append({
+            window_events = [
+                ev_list[j] for j in range(i, len(times))
+                if (times[j] - start_time).total_seconds() <= window_sec
+            ]
+
+            if len(window_events) >= threshold:
+                alert = {
                     "rule_id": rule["rule_id"],
                     "rule_name": rule["name"],
                     "event_type": rule["event_type"],
@@ -146,19 +152,21 @@ def detect_webscan(events, rule):
                     "raw_event": ev_list[i]["raw"],
                     "technique_id": rule["technique_id"],
                     "tactic": rule["tactic"]
-                })
+                }
+                results.append((alert, window_events))
                 ip_last_alert = start_time
-    return alerts
+
+    return results
 
 def detect_privesc(events, rule):
-    alerts = []
+    results = []
 
     sudo_events = [e for e in events if e["event_type"] == rule["event_type"]]
     if not sudo_events:
-        return alerts
+        return results
 
     for event in sudo_events:
-        alerts.append({
+        alert = {
             "rule_id": rule["rule_id"],
             "rule_name": rule["name"],
             "event_type": rule["event_type"],
@@ -170,21 +178,23 @@ def detect_privesc(events, rule):
             "raw_event": event["raw"],
             "technique_id": rule["technique_id"],
             "tactic": rule["tactic"]
-        })
-    return alerts
+        }
+        results.append((alert, [event]))
+
+    return results
 
 def detect_credstuffing(events, rule):
     threshold = rule["threshold"]
     window_sec = rule["time_window_seconds"]
     cooldown_sec = 300
-    alerts = []
+    results = []
 
     failed_events = [
         e for e in events
         if e["event_type"] == rule["event_type"] and e["source_ip"] and e.get("user")
     ]
     if not failed_events:
-        return alerts
+        return results
 
     ip_events = {}
     for e in failed_events:
@@ -206,7 +216,7 @@ def detect_credstuffing(events, rule):
             unique_users = set(e["user"] for e in window_events if e.get("user"))
 
             if len(unique_users) >= threshold:
-                alerts.append({
+                alert = {
                     "rule_id": rule["rule_id"],
                     "rule_name": rule["name"],
                     "event_type": rule["event_type"],
@@ -218,9 +228,11 @@ def detect_credstuffing(events, rule):
                     "raw_event": ev_list[i]["raw"],
                     "technique_id": rule["technique_id"],
                     "tactic": rule["tactic"]
-                })
+                }
+                results.append((alert, window_events))
                 ip_last_alert = start_time
-    return alerts
+
+    return results
 
 RULE_DISPATCHER = {
     "bruteforce": detect_bruteforce,
@@ -234,17 +246,17 @@ def detection_engine():
     try:
         rules = json.loads(RULES_PATH.read_text())
         events = normalize_events()
-        alerts = []
+        results = []
 
         for rule in rules:
             rule_type = rule.get("rule_type")
             detector = RULE_DISPATCHER.get(rule_type)
             if detector:
-                alerts.extend(detector(events, rule))
+                results.extend(detector(events, rule))
             else:
                 print(f"No detector found for rule_type: {rule_type}")
 
-        return alerts
+        return results
     except Exception as e:
         print(f"Detection engine error: {e}")
         return []

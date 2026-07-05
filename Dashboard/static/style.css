@@ -329,3 +329,23 @@ tr:hover {
 .back-link:hover {
     color: #a8ccff;
 }
+
+.event-count {
+    font-size: 12px;
+    color: #aaa;
+    font-weight: normal;
+    margin-left: 8px;
+}
+
+.raw-log-inline {
+    background: #0a0d14;
+    color: #7eb3ff;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-family: monospace;
+    font-size: 11px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+    margin: 0;
+}

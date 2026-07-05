@@ -14,6 +14,7 @@ def get_connection():
 def init_db():
     conn = get_connection()
     cursor = conn.cursor()
+
     cursor.execute("""
         CREATE TABLE IF NOT EXISTS alerts(
             id INTEGER PRIMARY KEY,
@@ -31,41 +32,100 @@ def init_db():
             tactic TEXT
         )
     """)
+
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS alert_events(
+            id INTEGER PRIMARY KEY,
+            alert_id INTEGER,
+            raw_event TEXT,
+            timestamp TEXT,
+            source_ip TEXT,
+            FOREIGN KEY (alert_id) REFERENCES alerts(id)
+        )
+    """)
+
     conn.commit()
     conn.close()
 
 def save_alert(alert):
     conn = get_connection()
     cursor = conn.cursor()
+
     cursor.execute("""
         SELECT id FROM alerts
         WHERE rule_id = ? AND source_ip = ? AND timestamp = ?
     """, (alert["rule_id"], alert["source_ip"], alert["timestamp"]))
 
-    if not cursor.fetchone():
-        cursor.execute("""
-            INSERT INTO alerts (
-                rule_id, rule_name, event_type, source_ip, user,
-                severity, timestamp, status, notes,
-                raw_event, technique_id, tactic
-            )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            alert["rule_id"],
-            alert["rule_name"],
-            alert["event_type"],
-            alert["source_ip"],
-            alert.get("user"),
-            alert["severity"],
-            alert["timestamp"],
-            alert["status"],
-            "",
-            alert.get("raw_event"),
-            alert.get("technique_id"),
-            alert.get("tactic")
-        ))
-        conn.commit()
+    existing = cursor.fetchone()
+    if existing:
+        conn.close()
+        return None
+
+    cursor.execute("""
+        INSERT INTO alerts (
+            rule_id, rule_name, event_type, source_ip, user,
+            severity, timestamp, status, notes,
+            raw_event, technique_id, tactic
+        )
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """, (
+        alert["rule_id"],
+        alert["rule_name"],
+        alert["event_type"],
+        alert["source_ip"],
+        alert.get("user"),
+        alert["severity"],
+        alert["timestamp"],
+        alert["status"],
+        "",
+        alert.get("raw_event"),
+        alert.get("technique_id"),
+        alert.get("tactic")
+    ))
+
+    alert_id = cursor.lastrowid
+    conn.commit()
     conn.close()
+    return alert_id
+
+def save_alert_events(alert_id, events):
+    conn = get_connection()
+    cursor = conn.cursor()
+
+    for event in events:
+        cursor.execute("""
+            INSERT INTO alert_events (alert_id, raw_event, timestamp, source_ip)
+            VALUES (?, ?, ?, ?)
+        """, (
+            alert_id,
+            event.get("raw"),
+            event.get("timestamp"),
+            event.get("source_ip")
+        ))
+
+    conn.commit()
+    conn.close()
+
+def load_events_by_alert_id(alert_id):
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT raw_event, timestamp, source_ip
+        FROM alert_events
+        WHERE alert_id = ?
+        ORDER BY id ASC
+    """, (alert_id,))
+    rows = cursor.fetchall()
+    conn.close()
+
+    events = []
+    for row in rows:
+        events.append({
+            "raw_event": row[0],
+            "timestamp": row[1],
+            "source_ip": row[2]
+        })
+    return events
 
 def load_alerts():
     conn = get_connection()

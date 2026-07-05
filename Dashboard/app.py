@@ -5,16 +5,18 @@ from flask import Flask, render_template, jsonify, request, redirect, url_for
 sys.path.append(str(Path(__file__).parent.parent))
 
 from Detection.engine import detection_engine
-from Storage.store import update_alert, save_alert, load_alerts, load_alert_by_id, load_metrics, init_db
+from Storage.store import update_alert, save_alert, save_alert_events, load_alerts, load_alert_by_id, load_metrics, load_events_by_alert_id, init_db
 
 app = Flask(__name__)
 
 init_db()
 
 def run_pipeline():
-    alerts = detection_engine()
-    for alert in alerts:
-        save_alert(alert)
+    results = detection_engine()
+    for alert, events in results:
+        alert_id = save_alert(alert)
+        if alert_id:
+            save_alert_events(alert_id, events)
 
 @app.route("/")
 def home():
@@ -45,7 +47,8 @@ def alert_details(alert_id):
     alert = load_alert_by_id(alert_id)
     if not alert:
         return render_template("404.html"), 404
-    return render_template("alert_details.html", alert=alert)
+    events = load_events_by_alert_id(alert_id)
+    return render_template("alert_details.html", alert=alert, events=events)
 
 @app.route("/alert/<int:alert_id>/update", methods=["POST"])
 def update_alert_status(alert_id):

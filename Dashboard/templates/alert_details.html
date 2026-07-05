@@ -42,6 +42,26 @@
     <pre class="raw-log">{{ alert["raw_event"] or "No raw event linked to this alert." }}</pre>
 </div>
 
+{% if events %}
+<div class="details-card">
+    <h3>Linked Events <span class="event-count">{{ events | length }} event{{ 's' if events | length != 1 else '' }}</span></h3>
+    <table class="details-table">
+        <tr>
+            <th>Timestamp</th>
+            <th>Source IP</th>
+            <th>Raw Log</th>
+        </tr>
+        {% for event in events %}
+        <tr>
+            <td>{{ event["timestamp"] }}</td>
+            <td>{{ event["source_ip"] }}</td>
+            <td><pre class="raw-log-inline">{{ event["raw_event"] }}</pre></td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+{% endif %}
+
 <div class="details-card">
     <h3>Analyst Actions</h3>
     <form action="/alert/{{ alert['id'] }}/update" method="POST">
