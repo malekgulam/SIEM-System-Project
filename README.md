@@ -1,26 +1,25 @@
 SIEM System Project
 
-A Python and Flask-based Security Information and Event Management (SIEM) project that simulates a Security Operations Center (SOC) workflow. The platform ingests Linux authentication and Apache web logs, normalizes events into a common schema, executes JSON-configurable detection rules, stores alerts and supporting evidence, and provides a web dashboard for alert investigation, analyst workflow, and detection reporting.
+A Python-based Security Information and Event Management (SIEM) platform built with Python and Flask that simulates a Security Operations Center (SOC) workflow. The platform ingests Linux authentication and Apache access logs, normalizes events into a common schema, executes MITRE ATT&CK–mapped detection rules, stores alerts and supporting evidence, and provides a web dashboard for alert investigation, metrics, and analyst workflows.
 
-Features
+Table of Contents
 
-- Multi-source log ingestion
-  - Linux authentication logs ("auth.log")
-  - Apache access logs ("access.log")
-- Event parsing and normalization into a common event model
-- JSON-based detection rule repository
-- Five MITRE ATT&CK mapped detection rules
-- SQLite alert storage with duplicate alert prevention
-- Alert-to-event relationship tracking
-- Analyst workflow with alert status updates and investigation notes
-- Search alerts by IP address, rule ID, rule name, or MITRE technique
-- Detection metrics dashboard
-- MITRE ATT&CK coverage dashboard
-- Synthetic log generators for repeatable testing
+- Overview
+- Screenshots
+- Features
+- Architecture
+- Supported Log Sources
+- Detection Rules
+- Dashboard
+- Project Structure
+- Installation
+- Usage
+- Dashboard Routes
+- Technologies
 
----
+Overview
 
-SOC Workflow
+The platform simulates a simplified SOC pipeline:
 
 Logs
    │
@@ -42,221 +41,164 @@ Generate Alert
    ▼
 Investigate
 
-The platform stores normalized events and generated alerts separately. Every alert retains its original raw log and maintains links to all events that contributed to the detection, allowing analysts to review supporting evidence during investigations.
+Alerts are linked to the normalized events that triggered them, allowing analysts to investigate detections using both parsed event data and the original raw log entries.
 
----
+Screenshots
+
+Place screenshots near the top so visitors immediately understand what the project looks like.
+
+Dashboard
+
+![Dashboard](Screenshots/dashboard.png)
+
+Alert Details
+
+![Alert Details](Screenshots/alert_details.png)
+
+Detection Metrics
+
+![Metrics](Screenshots/metrics.png)
+
+MITRE Coverage
+
+![Coverage](Screenshots/coverage.png)
+
+Search
+
+![Search](Screenshots/search.png)
+
+Features
+
+Log Processing
+
+- Linux authentication log ingestion
+- Apache access log ingestion
+- Event parsing
+- Event normalization
+- Synthetic log generation
+
+Detection Engine
+
+- JSON-based rule repository
+- MITRE ATT&CK mapped detections
+- Configurable detection engine
+- Duplicate alert prevention
+- Alert-to-event relationship tracking
+
+Investigation
+
+- Alert lifecycle management
+- Analyst notes
+- Linked triggering events
+- Raw log evidence
+- Search by IP, rule, or MITRE technique
+
+Reporting
+
+- Detection metrics
+- MITRE ATT&CK coverage
+- Severity statistics
+- Tactic distribution
+- Dashboard visualizations
+
+Architecture
+
+The application consists of independent modules for ingestion, parsing, detection, storage, and visualization.
+
+Generators
+      │
+      ▼
+Ingestion
+      │
+      ▼
+Parsing
+      │
+      ▼
+Normalization
+      │
+      ▼
+Detection Engine
+      │
+      ▼
+SQLite
+      │
+      ▼
+Flask Dashboard
 
 Supported Log Sources
 
-Linux Authentication Logs ("auth.log")
-
-Supported event types include:
+Linux Authentication Logs
 
 - SSH failed logins
 - SSH successful logins
-- sudo command execution
+- sudo execution
 - su activity
 
-Apache Access Logs ("access.log")
-
-Supported event types include:
+Apache Access Logs
 
 - HTTP requests
-- HTTP response status codes
+- Status codes
 - Requested URLs
 - Source IP addresses
 
----
-
 Detection Rules
 
-Rule ID| Rule Name| MITRE Technique| Tactic| Trigger
-BF-001| SSH Brute Force| T1110| Credential Access| Five or more failed SSH logins from one IP within 60 seconds
-OHL-001| Off-Hours Login| T1078| Defense Evasion| Successful login between 00:00 and 05:00
-WS-001| Web Scanning Activity| T1595| Reconnaissance| Ten or more HTTP 404 responses from one IP within 30 seconds
-PFS-001| Privilege Escalation via sudo| T1548| Privilege Escalation| sudo command execution
-CSF-001| Credential Stuffing| T1110.004| Credential Access| Failed logins against three or more different usernames from one IP within 60 seconds
-
-Detection rules are defined in "rules.json" and include metadata such as rule ID, rule type, severity, MITRE ATT&CK technique, and tactic. The detection engine dispatches rules based on their configured rule type.
-
----
-
-Alert Investigation
-
-Each alert contains:
-
-- Rule information
-- Severity
-- MITRE ATT&CK technique and tactic
-- Source IP
-- Username (when applicable)
-- Original raw log
-- Linked normalized events
-- Analyst notes
-- Investigation status
-
-Alert lifecycle:
-
-NEW
-   │
-   ▼
-INVESTIGATING
-   │
-   ▼
-ESCALATED
-   │
-   ▼
-CLOSED
-
----
+(Keep your existing detection table here.)
 
 Dashboard
 
-The Flask dashboard provides:
-
-Dashboard
+Main Dashboard
 
 - Alert overview
 - Severity distribution
 - Top source IPs
-- MITRE tactic breakdown
-- Alert filtering by:
-  - Severity
-  - Status
-  - Tactic
-  - Search query
+- MITRE tactic distribution
+- Alert filtering
 
-Alert Details
+Alert Investigation
 
 - Alert metadata
-- MITRE ATT&CK information
+- Linked events
 - Raw log
-- Linked triggering events
-- Status management
+- MITRE ATT&CK information
 - Analyst notes
+- Status updates
 
-Metrics
+Detection Metrics
 
-Per-rule statistics including:
-
-- Total alerts generated
+- Total alerts per rule
 - High-severity alerts
-- Unreviewed alerts
 - Closed alerts
+- Unreviewed alerts
 
 MITRE Coverage
 
-Displays implemented detections grouped by ATT&CK tactic together with alert volume.
+Displays implemented detections grouped by ATT&CK tactic.
 
 Search
 
-Search alerts by:
+Search alerts using:
 
-- Source IP
+- IP address
 - Rule ID
 - Rule name
-- MITRE technique ID
-
----
+- MITRE technique
 
 Project Structure
 
-SIEM-System-Project/
-│
-├── config.py
-├── requirements.txt
-│
-├── Data/
-│   └── Logs/
-│       ├── auth.log
-│       └── access.log
-│
-├── Generators/
-│   ├── auth_log_generator.py
-│   └── access_log_generator.py
-│
-├── Ingestion/
-│   └── reader.py
-│
-├── Parsing/
-│   ├── parser.py
-│   └── normalization.py
-│
-├── Detection/
-│   ├── engine.py
-│   └── rules.json
-│
-├── Storage/
-│   └── store.py
-│
-└── Dashboard/
-    ├── app.py
-    ├── static/
-    └── templates/
-
----
+(Keep your existing folder tree.)
 
 Installation
 
-git clone <your-repository-url>
-cd SIEM-System-Project
-
-python -m venv .venv
-
-Activate the virtual environment.
-
-Windows:
-
-.venv\Scripts\activate
-
-Linux/macOS:
-
-source .venv/bin/activate
-
-Install dependencies:
-
-pip install -r requirements.txt
-
----
+(Keep your existing installation instructions.)
 
 Usage
 
-Generate sample logs:
-
-python Generators/auth_log_generator.py
-python Generators/access_log_generator.py
-
-Start the dashboard:
-
-python Dashboard/app.py
-
-Open:
-
-http://127.0.0.1:5000
-
-On startup, the application:
-
-- Reads log files
-- Parses log events
-- Normalizes events
-- Executes detection rules
-- Stores newly generated alerts
-- Links alerts to contributing events
-
-Duplicate alerts are automatically ignored.
-
----
+(Keep your existing usage instructions.)
 
 Dashboard Routes
 
-Route| Description
-"/"| Dashboard with alerts, charts, and filters
-"/alert/<id>"| Alert details, linked events, raw log, MITRE mapping, analyst notes
-"/metrics"| Detection statistics by rule
-"/coverage"| MITRE ATT&CK coverage
-"/search"| Search alerts by IP, rule, or MITRE technique
-
----
+(Keep your existing route table.)
 
 Technologies
 
@@ -265,27 +207,3 @@ Technologies
 - SQLite
 - Jinja2
 - Chart.js
-
----
-
-Screenshots
-
-Dashboard
-
-"Dashboard" (Screenshots/dashboard.png)
-
-Alert Details
-
-"Alert Details" (Screenshots/alert_details.png)
-
-Metrics
-
-"Metrics" (Screenshots/metrics.png)
-
-MITRE Coverage
-
-"Coverage" (Screenshots/coverage.png)
-
-Search
-
-"Search" (Screenshots/search.png)
