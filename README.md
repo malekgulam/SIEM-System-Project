@@ -138,47 +138,15 @@ contributed to the detection.
 
 ## Detection Rules
 
-  -------------------------------------------------------------------------------
-  Rule ID     Rule Name      MITRE Technique        Tactic           Trigger
-  ----------- -------------- ---------------------- ---------------- ------------
-  BF-001      SSH Brute      T1110                  Credential       Five or more
-              Force                                 Access           failed SSH
-                                                                     logins from
-                                                                     one IP
-                                                                     within 60
-                                                                     seconds
+| Rule ID | Rule Name | MITRE Technique | Tactic | Trigger |
+|---------|-----------|-----------------|--------|---------|
+| BF-001 | SSH Brute Force | T1110 | Credential Access | Five or more failed SSH logins from one IP within 60 seconds |
+| OHL-001 | Off-Hours Login | T1078 | Defense Evasion | Successful login between 00:00 and 05:00 |
+| WS-001 | Web Scanning Activity | T1595 | Reconnaissance | Ten or more HTTP 404 responses from one IP within 30 seconds |
+| PFS-001 | Privilege Escalation via sudo | T1548 | Privilege Escalation | Any `sudo` command execution |
+| CSF-001 | Credential Stuffing | T1110.004 | Credential Access | Failed logins against three or more different usernames from one IP within 60 seconds |
 
-  OHL-001     Off-Hours      T1078                  Defense Evasion  Successful
-              Login                                                  login
-                                                                     between
-                                                                     00:00 and
-                                                                     05:00
-
-  WS-001      Web Scanning   T1595                  Reconnaissance   Ten or more
-              Activity                                               HTTP 404
-                                                                     responses
-                                                                     from one IP
-                                                                     within 30
-                                                                     seconds
-
-  PFS-001     Privilege      T1548                  Privilege        Any `sudo`
-              Escalation via                        Escalation       command
-              sudo                                                   execution
-
-  CSF-001     Credential     T1110.004              Credential       Failed
-              Stuffing                              Access           logins
-                                                                     against
-                                                                     three or
-                                                                     more
-                                                                     different
-                                                                     usernames
-                                                                     from one IP
-                                                                     within 60
-                                                                     seconds
-  -------------------------------------------------------------------------------
-
-Detection rules are defined in `Detection/rules.json` and include Rule
-ID, Rule Type, Severity, MITRE ATT&CK Technique, and Tactic metadata.
+Detection rules are defined in `Detection/rules.json` and include Rule ID, Rule Type, Severity, MITRE ATT&CK Technique, and Tactic metadata.
 
 ------------------------------------------------------------------------
 
@@ -287,22 +255,13 @@ Duplicate alerts are automatically ignored.
 
 ## Dashboard Routes
 
-  -----------------------------------------------------------------------
-  Route                    Description
-  ------------------------ ----------------------------------------------
-  `/`                      Dashboard with alerts, charts, filters, and
-                           statistics
-
-  `/alert/<id>`            Alert details, linked events, raw log, MITRE
-                           mapping, status updates, and analyst notes
-
-  `/metrics`               Detection statistics for each rule
-
-  `/coverage`              MITRE ATT&CK tactic and technique coverage
-
-  `/search`                Search alerts by IP address, Rule ID, Rule
-                           Name, or MITRE Technique
-  -----------------------------------------------------------------------
+| Route | Description |
+|-------|-------------|
+| `/` | Dashboard with alerts, charts, filters, and statistics |
+| `/alert/<id>` | Alert details, linked events, raw log, MITRE mapping, status updates, and analyst notes |
+| `/metrics` | Detection statistics for each rule |
+| `/coverage` | MITRE ATT&CK tactic and technique coverage |
+| `/search` | Search alerts by IP address, Rule ID, Rule Name, or MITRE Technique |
 
 ------------------------------------------------------------------------
 
