@@ -143,7 +143,14 @@ Apache Access Logs
 
 Detection Rules
 
-(Keep your existing detection table here.)
+Rule ID| Rule Name| MITRE ATT&CK| Tactic| Trigger
+BF-001| SSH Brute Force| T1110| Credential Access| Five or more failed SSH logins from the same source IP within 60 seconds
+OHL-001| Off-Hours Login| T1078| Defense Evasion| Successful SSH login between 00:00 and 05:00
+WS-001| Web Scanning Activity| T1595| Reconnaissance| Ten or more HTTP 404 responses from the same source IP within 30 seconds
+PFS-001| Privilege Escalation via sudo| T1548| Privilege Escalation| Detects execution of privileged commands using "sudo"
+CSF-001| Credential Stuffing| T1110.004| Credential Access| Failed logins against three or more different usernames from the same source IP within 60 seconds
+
+Detection rules are defined in "Detection/rules.json". Each rule contains metadata such as the rule ID, rule type, severity, MITRE ATT&CK technique, and tactic. The detection engine uses this metadata to dispatch detections while keeping rule configuration separate from the detection logic.
 
 Dashboard
 
