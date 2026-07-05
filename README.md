@@ -266,6 +266,8 @@ Technologies
 - Jinja2
 - Chart.js
 
+---
+
 Screenshots
 
 Dashboard
@@ -276,11 +278,11 @@ Alert Details
 
 "Alert Details" (Screenshots/alert_details.png)
 
-Detection Metrics
+Metrics
 
 "Metrics" (Screenshots/metrics.png)
 
-MITRE ATT&CK Coverage
+MITRE Coverage
 
 "Coverage" (Screenshots/coverage.png)
 
