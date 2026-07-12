@@ -1,0 +1,102 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<a href="{{ url_for('events_browser') }}" class="back-link">← Back to Events</a>
+
+<div class="page-header">
+    <span class="page-title">Event #{{ event["id"] }}</span>
+    <div class="flex gap-8">
+        {% if event["event_type"] %}
+        <span class="event-type-tag event-{{ event['event_type'] }}">
+            {{ event["event_type"] }}
+        </span>
+        {% endif %}
+    </div>
+</div>
+
+<div class="detail-grid">
+
+    <div class="detail-panel">
+        <div class="detail-panel-title">Event Info</div>
+        <table class="kv-table">
+            <tr>
+                <td>Event ID</td>
+                <td class="mono text-orange">{{ event["id"] }}</td>
+            </tr>
+            <tr>
+                <td>Timestamp</td>
+                <td class="mono">{{ event["timestamp"] or "-" }}</td>
+            </tr>
+            <tr>
+                <td>Event Type</td>
+                <td>
+                    <span class="event-type-tag event-{{ event['event_type'] }}">
+                        {{ event["event_type"] or "-" }}
+                    </span>
+                </td>
+            </tr>
+            <tr>
+                <td>Status</td>
+                <td class="mono text-muted">{{ event["status"] or "-" }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="detail-panel">
+        <div class="detail-panel-title">Source Info</div>
+        <table class="kv-table">
+            <tr>
+                <td>Source IP</td>
+                <td class="mono">{{ event["source_ip"] or "-" }}</td>
+            </tr>
+            <tr>
+                <td>User</td>
+                <td class="mono">{{ event["user"] or "-" }}</td>
+            </tr>
+            <tr>
+                <td>Process</td>
+                <td class="mono text-muted">{{ event["process"] or "-" }}</td>
+            </tr>
+        </table>
+    </div>
+
+    <div class="detail-panel accent-left">
+        <div class="detail-panel-title">Search Alerts</div>
+        <table class="kv-table">
+            <tr>
+                <td>By IP</td>
+                <td>
+                    {% if event["source_ip"] %}
+                    <a href="{{ url_for('search') }}?q={{ event['source_ip'] }}"
+                       class="btn btn-ghost btn-sm">
+                        Search {{ event["source_ip"] }}
+                    </a>
+                    {% else %}
+                    <span class="text-muted">—</span>
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td>By User</td>
+                <td>
+                    {% if event["user"] %}
+                    <a href="{{ url_for('search') }}?q={{ event['user'] }}"
+                       class="btn btn-ghost btn-sm">
+                        Search {{ event["user"] }}
+                    </a>
+                    {% else %}
+                    <span class="text-muted">—</span>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+    </div>
+
+</div>
+
+<div class="detail-panel span-full mb-16">
+    <div class="detail-panel-title">Raw Log</div>
+    <pre class="raw-block">{{ event["raw"] or "No raw log available." }}</pre>
+</div>
+
+{% endblock %}

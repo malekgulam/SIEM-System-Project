@@ -1,55 +1,98 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<h2>Search Alerts</h2>
+<div class="page-header">
+    <span class="page-title">Search</span>
+    <span class="page-subtitle">Search alerts by IP, rule, or technique</span>
+</div>
 
 <form action="{{ url_for('search') }}" method="GET">
-    <div class="filters">
-        <input type="text" name="q" value="{{ query }}" placeholder="Search by IP, Rule ID, Rule Name, Technique...">
-        <button type="submit" class="btn-save">Search</button>
+    <div class="filter-bar mb-20">
+        <input
+            type="text"
+            name="q"
+            value="{{ query }}"
+            placeholder="Search by IP address, Rule ID, Rule Name, MITRE Technique..."
+            style="min-width: 380px;"
+            autofocus>
+        <button type="submit" class="btn btn-primary">Search</button>
     </div>
 </form>
 
 {% if query %}
-    <p style="color: #aaa; font-size: 13px; margin-bottom: 16px;">
-        {{ alerts | length }} result{{ 's' if alerts | length != 1 else '' }} for <strong style="color: #7eb3ff;">{{ query }}</strong>
-    </p>
+<div class="section-header mb-12">
+    <span class="section-title">Results</span>
+    <span class="section-count">
+        {{ alerts | length }} result{{ 's' if alerts | length != 1 else '' }} for
+        <span class="mono text-orange">{{ query }}</span>
+    </span>
+</div>
 {% endif %}
 
 {% if alerts %}
-<table>
-    <tr>
-        <th>Rule ID</th>
-        <th>Rule Name</th>
-        <th>Source IP</th>
-        <th>User</th>
-        <th>Technique</th>
-        <th>Tactic</th>
-        <th>Severity</th>
-        <th>Timestamp</th>
-        <th>Status</th>
-    </tr>
-    {% for alert in alerts %}
-    {% set detail_url = url_for('alert_details', alert_id=alert['id']) %}
-    <tr onclick="window.location='{{ detail_url }}';" style="cursor: pointer;">
-        <td>{{ alert["rule_id"] }}</td>
-        <td>{{ alert["rule_name"] }}</td>
-        <td>{{ alert["source_ip"] }}</td>
-        <td>{{ alert["user"] or "-" }}</td>
-        <td><span class="mitre-badge">{{ alert["technique_id"] }}</span></td>
-        <td>{{ alert["tactic"] }}</td>
-        <td><span class="badge {{ alert['severity'] }}">{{ alert["severity"] }}</span></td>
-        <td>{{ alert["timestamp"] }}</td>
-        <td><span class="badge {{ alert['status'] }}">{{ alert["status"] }}</span></td>
-    </tr>
-    {% endfor %}
-</table>
+<div class="data-table-wrap">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Rule</th>
+                <th>Source IP</th>
+                <th>User</th>
+                <th>Technique</th>
+                <th>Tactic</th>
+                <th>Risk</th>
+                <th>Severity</th>
+                <th>Timestamp</th>
+                <th>Status</th>
+                <th>Verdict</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for alert in alerts %}
+            {% set detail_url = url_for('alert_details', alert_id=alert['id']) %}
+            <tr class="clickable" onclick="window.location='{{ detail_url }}';">
+                <td>
+                    <span class="mono text-orange">{{ alert["rule_id"] }}</span>
+                    <div class="text-muted" style="font-size:11px;">{{ alert["rule_name"] }}</div>
+                </td>
+                <td class="mono">{{ alert["source_ip"] or "-" }}</td>
+                <td class="mono">{{ alert["user"] or "-" }}</td>
+                <td><span class="mitre-tag">{{ alert["technique_id"] }}</span></td>
+                <td class="text-muted">{{ alert["tactic"] or "-" }}</td>
+                <td>
+                    <div class="risk-bar-wrap">
+                        <div class="risk-bar">
+                            <div class="risk-bar-fill" data-score="{{ alert['risk_score'] or 0 }}"></div>
+                        </div>
+                        <span class="risk-value">{{ alert["risk_score"] or 0 }}</span>
+                    </div>
+                </td>
+                <td><span class="tag tag-{{ alert['severity'] }}">{{ alert["severity"] }}</span></td>
+                <td class="mono text-muted">{{ alert["timestamp"] }}</td>
+                <td><span class="tag tag-{{ alert['status'] }}">{{ alert["status"] }}</span></td>
+                <td>
+                    {% if alert["verdict"] %}
+                    <span class="tag tag-{{ 'TP' if alert['verdict'] == 'TRUE POSITIVE' else ('FP' if alert['verdict'] == 'FALSE POSITIVE' else 'BEN') }}">
+                        {{ alert["verdict"] }}
+                    </span>
+                    {% else %}
+                    <span class="text-muted mono" style="font-size:10px;">—</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 
 {% elif query %}
-<p class="empty-msg">No alerts found matching <strong>{{ query }}</strong>.</p>
+<div class="empty-state">
+    No alerts found matching <span class="mono text-orange">{{ query }}</span>
+</div>
 
 {% else %}
-<p class="empty-msg">Enter a search term above to find alerts.</p>
+<div class="empty-state">
+    Enter a search term above to find alerts.
+</div>
 {% endif %}
 
 {% endblock %}

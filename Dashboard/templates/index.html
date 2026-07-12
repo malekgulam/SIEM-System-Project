@@ -1,41 +1,56 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<h2>SOC Alert Dashboard</h2>
+<div class="page-header">
+    <span class="page-title">Dashboard</span>
+    <span class="page-subtitle">{{ alerts | length }} alerts loaded</span>
+</div>
 
-<div class="cards">
-    <div class="card">
-        <h2>{{ total }}</h2>
-        <p>Total Alerts</p>
+<div class="stat-strip">
+    <div class="stat-item">
+        <span class="stat-value">{{ total }}</span>
+        <span class="stat-label">Total Alerts</span>
     </div>
-    <div class="card highlight-high">
-        <h2>{{ high }}</h2>
-        <p>HIGH Alerts</p>
+    <div class="stat-item accent-red">
+        <span class="stat-value">{{ high }}</span>
+        <span class="stat-label">HIGH Severity</span>
     </div>
-    <div class="card highlight-new">
-        <h2>{{ new }}</h2>
-        <p>NEW Alerts</p>
+    <div class="stat-item accent-orange">
+        <span class="stat-value">{{ new }}</span>
+        <span class="stat-label">Unreviewed</span>
     </div>
-    <div class="card highlight-escalated">
-        <h2>{{ escalated }}</h2>
-        <p>ESCALATED</p>
+    <div class="stat-item accent-blue">
+        <span class="stat-value">{{ escalated }}</span>
+        <span class="stat-label">Escalated</span>
+    </div>
+    <div class="stat-item accent-green">
+        <span class="stat-value">{{ avg_risk }}</span>
+        <span class="stat-label">Avg Risk Score</span>
     </div>
 </div>
 
-<div class="charts">
-    <div class="chart-box">
-        <canvas id="severityChart"></canvas>
+<div class="charts-row">
+    <div class="chart-panel">
+        <div class="chart-panel-title">Severity</div>
+        <canvas id="severityChart" height="140"></canvas>
     </div>
-    <div class="chart-box">
-        <canvas id="ipChart"></canvas>
+    <div class="chart-panel">
+        <div class="chart-panel-title">Top Source IPs</div>
+        <canvas id="ipChart" height="140"></canvas>
     </div>
-    <div class="chart-box">
-        <canvas id="tacticChart"></canvas>
+    <div class="chart-panel">
+        <div class="chart-panel-title">Tactic Distribution</div>
+        <canvas id="tacticChart" height="140"></canvas>
     </div>
 </div>
 
-<div class="filters">
-    <input type="text" id="searchIP" placeholder="Search by IP, Rule, Technique...">
+<div class="section-header">
+    <span class="section-title">Alert Queue</span>
+    <span class="section-count">{{ alerts | length }} total</span>
+</div>
+
+<div class="filter-bar mb-12">
+    <input type="text" id="searchInput" placeholder="Search IP, rule, technique...">
     <select id="filterSeverity">
         <option value="">All Severities</option>
         <option value="HIGH">HIGH</option>
@@ -58,43 +73,66 @@
     </select>
 </div>
 
-<table id="alertTable">
-    <tr>
-        <th>Rule ID</th>
-        <th>Rule Name</th>
-        <th>Source IP</th>
-        <th>User</th>
-        <th>Technique</th>
-        <th>Tactic</th>
-        <th>Severity</th>
-        <th>Timestamp</th>
-        <th>Status</th>
-    </tr>
-    {% for alert in alerts %}
-    {% set detail_url = url_for('alert_details', alert_id=alert['id']) %}
-    <tr onclick="window.location='{{ detail_url }}';" class="alert-row"
-        data-severity="{{ alert['severity'] }}"
-        data-status="{{ alert['status'] }}"
-        data-ip="{{ alert['source_ip'] }}"
-        data-tactic="{{ alert['tactic'] }}"
-        data-rule="{{ alert['rule_id'] }}"
-        data-technique="{{ alert['technique_id'] }}">
-        <td>{{ alert["rule_id"] }}</td>
-        <td>{{ alert["rule_name"] }}</td>
-        <td>{{ alert["source_ip"] }}</td>
-        <td>{{ alert["user"] or "-" }}</td>
-        <td>{{ alert["technique_id"] }}</td>
-        <td>{{ alert["tactic"] }}</td>
-        <td><span class="badge {{ alert['severity'] }}">{{ alert["severity"] }}</span></td>
-        <td>{{ alert["timestamp"] }}</td>
-        <td><span class="badge {{ alert['status'] }}">{{ alert["status"] }}</span></td>
-    </tr>
-    {% endfor %}
-</table>
+<div class="data-table-wrap">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Rule</th>
+                <th>Source IP</th>
+                <th>User</th>
+                <th>Technique</th>
+                <th>Tactic</th>
+                <th>Risk</th>
+                <th>Severity</th>
+                <th>Timestamp</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for alert in alerts %}
+            {% set detail_url = url_for('alert_details', alert_id=alert['id']) %}
+            <tr class="alert-row clickable"
+                onclick="window.location='{{ detail_url }}';"
+                data-severity="{{ alert['severity'] }}"
+                data-status="{{ alert['status'] }}"
+                data-ip="{{ alert['source_ip'] }}"
+                data-tactic="{{ alert['tactic'] }}"
+                data-rule="{{ alert['rule_id'] }}"
+                data-tech="{{ alert['technique_id'] }}">
+                <td>
+                    <span class="mono text-orange">{{ alert["rule_id"] }}</span>
+                    <div class="text-muted" style="font-size:11px;">{{ alert["rule_name"] }}</div>
+                </td>
+                <td class="mono">{{ alert["source_ip"] or "-" }}</td>
+                <td class="mono">{{ alert["user"] or "-" }}</td>
+                <td><span class="mitre-tag">{{ alert["technique_id"] }}</span></td>
+                <td class="text-muted">{{ alert["tactic"] or "-" }}</td>
+                <td>
+                    <div class="risk-bar-wrap">
+                        <div class="risk-bar">
+                            <div class="risk-bar-fill" data-score="{{ alert['risk_score'] or 0 }}"></div>
+                        </div>
+                        <span class="risk-value">{{ alert["risk_score"] or 0 }}</span>
+                    </div>
+                </td>
+                <td><span class="tag tag-{{ alert['severity'] }}">{{ alert["severity"] }}</span></td>
+                <td class="mono text-muted">{{ alert["timestamp"] }}</td>
+                <td><span class="tag tag-{{ alert['status'] }}">{{ alert["status"] }}</span></td>
+            </tr>
+            {% endfor %}
+            {% if not alerts %}
+            <div class="empty-state" style="margin-bottom:16px;">
+                No alerts yet. Click <strong style="color:var(--accent-orange);">Run Pipeline</strong> in the sidebar to ingest logs and run detection.
+            </div>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
 
 <script>
-const alertData = {{ alerts | tojson }};
-const topIps = {{ top_ips | tojson }};
+const alertData  = {{ alerts | tojson }};
+const topIps     = {{ top_ips | tojson }};
+const tacticCounts = {{ tactic_counts | tojson }};
 </script>
 
 {% endblock %}

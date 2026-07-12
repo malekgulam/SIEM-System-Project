@@ -1,0 +1,176 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div class="page-header">
+    <span class="page-title">Detection Simulator</span>
+    <span class="page-subtitle">Test a log line against a detection rule</span>
+</div>
+
+<div class="detail-grid" style="grid-template-columns: 1fr 1fr; margin-bottom: 16px;">
+
+    <div class="detail-panel span-full">
+        <div class="detail-panel-title">How It Works</div>
+        <p style="font-size:12px; color:var(--text-secondary); line-height:1.7; margin:0;">
+            Paste a raw log line and select a detection rule.
+            The simulator runs the log through the full pipeline —
+            ingestion, parsing, normalization, and detection —
+            and tells you whether the rule would fire and why.
+            Use this to validate new rules before deploying them
+            or to understand why an existing rule triggered.
+        </p>
+    </div>
+
+</div>
+
+<div class="form-panel mb-16">
+    <form action="{{ url_for('simulator') }}" method="POST">
+
+        <div class="form-group mb-12">
+            <label class="form-label">Detection Rule</label>
+            <select name="rule_id" class="form-control">
+                <option value="" disabled {% if not selected_rule %}selected{% endif %}>
+                    Select a rule to test against
+                </option>
+                {% for rule in rules %}
+                <option value="{{ rule['rule_id'] }}"
+                    {% if selected_rule == rule['rule_id'] %}selected{% endif %}>
+                    {{ rule['rule_id'] }} — {{ rule['name'] }} ({{ rule['technique_id'] }})
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div class="form-group mb-16">
+            <label class="form-label">Raw Log Line</label>
+            <textarea name="log_line" class="form-control mono" rows="4"
+                      placeholder="Paste a raw log line here...">{{ log_line }}</textarea>
+        </div>
+
+        <div class="flex gap-8">
+            <button type="submit" class="btn btn-primary">Run Simulation</button>
+            <a href="{{ url_for('simulator') }}" class="btn btn-ghost">Clear</button>
+        </div>
+
+    </form>
+</div>
+
+{% if result %}
+<div class="sim-result">
+
+    <div class="sim-result-header {{ 'matched' if result['matched'] else 'no-match' }}">
+        {% if result["matched"] %}
+        ✓ Rule Matched — Alert Would Fire
+        {% else %}
+        ✗ No Match — Alert Would Not Fire
+        {% endif %}
+    </div>
+
+    <div class="sim-result-body">
+        {% if result["matched"] %}
+        <div class="sim-kv">
+            <span class="sim-kv-label">Rule ID</span>
+            <span class="sim-kv-value text-orange">{{ result["rule_id"] }}</span>
+
+            <span class="sim-kv-label">Rule Name</span>
+            <span class="sim-kv-value">{{ result["rule_name"] }}</span>
+
+            <span class="sim-kv-label">Technique</span>
+            <span class="sim-kv-value">
+                <span class="mitre-tag">{{ result["technique_id"] }}</span>
+            </span>
+
+            <span class="sim-kv-label">Tactic</span>
+            <span class="sim-kv-value">{{ result["tactic"] }}</span>
+
+            <span class="sim-kv-label">Severity</span>
+            <span class="sim-kv-value">
+                <span class="tag tag-{{ result['severity'] }}">{{ result["severity"] }}</span>
+            </span>
+
+            <span class="sim-kv-label">Source IP</span>
+            <span class="sim-kv-value">{{ result["source_ip"] }}</span>
+
+            <span class="sim-kv-label">Timestamp</span>
+            <span class="sim-kv-value">{{ result["timestamp"] }}</span>
+
+            <span class="sim-kv-label">Risk Score</span>
+            <span class="sim-kv-value">
+                <div class="risk-bar-wrap">
+                    <div class="risk-bar">
+                        <div class="risk-bar-fill"
+                             data-score="{{ result['risk_score'] }}">
+                        </div>
+                    </div>
+                    <span class="risk-value">{{ result["risk_score"] }} / 100</span>
+                </div>
+            </span>
+
+            <span class="sim-kv-label">Result</span>
+            <span class="sim-kv-value text-green">{{ result["reason"] }}</span>
+        </div>
+
+        {% else %}
+        <div class="sim-kv">
+            <span class="sim-kv-label">Result</span>
+            <span class="sim-kv-value text-red">{{ result["reason"] }}</span>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+{% endif %}
+
+<div class="detail-panel mb-16" style="margin-top:20px;">
+    <div class="detail-panel-title">Example Log Lines</div>
+    <p style="font-size:11px; color:var(--text-muted); margin-bottom:12px;">
+        Copy any line below and paste it into the simulator to test.
+    </p>
+
+    <table class="data-table" style="background:transparent;">
+        <thead>
+            <tr>
+                <th>Rule</th>
+                <th>Example Log</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="mono text-orange" style="white-space:nowrap;">BF-001</td>
+                <td>
+                    <pre class="raw-block" style="padding:5px 10px;font-size:10px;margin:0;">
+Jan 15 02:14:33 ubuntu sshd[1201]: Failed password for invalid user admin from 10.0.0.5 port 44321 ssh2</pre>
+                </td>
+            </tr>
+            <tr>
+                <td class="mono text-orange" style="white-space:nowrap;">OHL-001</td>
+                <td>
+                    <pre class="raw-block" style="padding:5px 10px;font-size:10px;margin:0;">
+Jan 15 03:22:10 ubuntu sshd[1312]: Accepted password for user from 172.16.1.24 port 54001 ssh2</pre>
+                </td>
+            </tr>
+            <tr>
+                <td class="mono text-orange" style="white-space:nowrap;">WS-001</td>
+                <td>
+                    <pre class="raw-block" style="padding:5px 10px;font-size:10px;margin:0;">
+10.0.0.5 - - [15/Jan/2024:02:15:44+0000] "GET /.env HTTP/1.1" 404 128</pre>
+                </td>
+            </tr>
+            <tr>
+                <td class="mono text-orange" style="white-space:nowrap;">PFS-001</td>
+                <td>
+                    <pre class="raw-block" style="padding:5px 10px;font-size:10px;margin:0;">
+Jan 15 09:45:12 ubuntu sudo[1422]: user : TTY=pts/0 ; PWD=/home/user ; USER=root ; COMMAND=/bin/ls</pre>
+                </td>
+            </tr>
+            <tr>
+                <td class="mono text-orange" style="white-space:nowrap;">CSF-001</td>
+                <td>
+                    <pre class="raw-block" style="padding:5px 10px;font-size:10px;margin:0;">
+Jan 15 02:14:35 ubuntu sshd[1203]: Failed password for invalid user root from 45.33.32.156 port 44323 ssh2</pre>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

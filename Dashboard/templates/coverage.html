@@ -1,58 +1,106 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<h2>Rule Coverage Summary</h2>
-
-{% if not tactics %}
-<p class="empty-msg">No alerts in database yet. Run the pipeline from the dashboard first.</p>
-{% else %}
-
-<div class="cards">
-    <div class="card">
-        <h2>{{ tactics | length }}</h2>
-        <p>Tactics Covered</p>
-    </div>
-    <div class="card">
-        <h2>{% set total_rules = namespace(count=0) %}{% for t, rules in tactics.items() %}{% set total_rules.count = total_rules.count + rules|length %}{% endfor %}{{ total_rules.count }}</h2>
-        <p>Rules Active</p>
-    </div>
-    <div class="card">
-        <h2>{{ tactics.values() | list | sum(attribute='length') if false else tactics | length }}</h2>
-        <p>Log Sources</p>
+<div class="page-header">
+    <span class="page-title">ATT&CK Coverage</span>
+    <div class="flex gap-8">
+        <a href="{{ url_for('navigator_export') }}" class="btn btn-ghost btn-sm">
+            ↓ Export Navigator Layer
+        </a>
     </div>
 </div>
 
-<div class="charts">
-    <div class="chart-box">
-        <canvas id="coverageChart"></canvas>
+{% if not tactics %}
+<div class="empty-state">
+    No alert data yet. Run the pipeline from the dashboard first.
+</div>
+{% else %}
+
+<div class="stat-strip mb-20">
+    <div class="stat-item">
+        <span class="stat-value">{{ tactics | length }}</span>
+        <span class="stat-label">Tactics Covered</span>
     </div>
+    <div class="stat-item accent-orange">
+        <span class="stat-value">
+            {% set ns = namespace(count=0) %}
+            {% for t, rules in tactics.items() %}
+                {% set ns.count = ns.count + rules | length %}
+            {% endfor %}
+            {{ ns.count }}
+        </span>
+        <span class="stat-label">Rules Active</span>
+    </div>
+    <div class="stat-item accent-blue">
+        <span class="stat-value">2</span>
+        <span class="stat-label">Log Sources</span>
+    </div>
+    <div class="stat-item accent-green">
+        <span class="stat-value">
+            {% set ns2 = namespace(total=0) %}
+            {% for t, rules in tactics.items() %}
+                {% for rule in rules %}
+                    {% set ns2.total = ns2.total + rule['total'] %}
+                {% endfor %}
+            {% endfor %}
+            {{ ns2.total }}
+        </span>
+        <span class="stat-label">Total Alerts</span>
+    </div>
+</div>
+
+<div class="charts-row mb-20" style="grid-template-columns: 1fr;">
+    <div class="chart-panel">
+        <div class="chart-panel-title">Alert Volume by Tactic</div>
+        <canvas id="coverageChart" height="100"></canvas>
+    </div>
+</div>
+
+<div class="section-header mb-12">
+    <span class="section-title">Tactic Breakdown</span>
+    <span class="section-count">{{ tactics | length }} tactic{{ 's' if tactics | length != 1 else '' }}</span>
 </div>
 
 {% for tactic, rules in tactics.items() %}
-<div class="tactic-block">
-
+<div class="tactic-block mb-20">
     <div class="tactic-header">
         <span class="tactic-name">{{ tactic }}</span>
-        <span class="tactic-count">{{ rules | length }} rule{{ 's' if rules | length > 1 else '' }}</span>
+        <span class="tactic-count">{{ rules | length }} rule{{ 's' if rules | length != 1 else '' }}</span>
     </div>
-
-    <table class="details-table">
-        <tr>
-            <th>Rule ID</th>
-            <th>Rule Name</th>
-            <th>Technique ID</th>
-            <th>Alerts Fired</th>
-        </tr>
-        {% for rule in rules %}
-        <tr>
-            <td>{{ rule["rule_id"] }}</td>
-            <td>{{ rule["rule_name"] }}</td>
-            <td><span class="mitre-badge">{{ rule["technique_id"] }}</span></td>
-            <td>{{ rule["total"] }}</td>
-        </tr>
-        {% endfor %}
-    </table>
-
+    <div class="data-table-wrap" style="border-top: none; border-radius: 0 0 2px 2px;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Rule ID</th>
+                    <th>Rule Name</th>
+                    <th>Technique ID</th>
+                    <th>Alerts Fired</th>
+                    <th>Coverage</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rule in rules %}
+                <tr>
+                    <td class="mono text-orange">{{ rule["rule_id"] }}</td>
+                    <td>{{ rule["rule_name"] }}</td>
+                    <td><span class="mitre-tag">{{ rule["technique_id"] }}</span></td>
+                    <td class="mono">{{ rule["total"] }}</td>
+                    <td>
+                        {% if rule["total"] > 0 %}
+                        <span class="tag tag-HIGH" style="background:rgba(61,165,98,0.12);color:#3da562;border-left-color:#3da562;">
+                            ACTIVE
+                        </span>
+                        {% else %}
+                        <span class="tag tag-CLOSED">
+                            NO ALERTS
+                        </span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endfor %}
 

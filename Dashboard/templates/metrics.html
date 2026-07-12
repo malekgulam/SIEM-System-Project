@@ -1,64 +1,108 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<h2>Detection Metrics</h2>
+<div class="page-header">
+    <span class="page-title">Detection Metrics</span>
+    <span class="page-subtitle">Rule performance and verdict analysis</span>
+</div>
 
 {% if not metrics %}
-<p class="empty-msg">No alerts in database yet. Run the pipeline from the dashboard first.</p>
+<div class="empty-state">
+    No alert data yet. Run the pipeline from the dashboard first.
+</div>
 {% else %}
 
-<div class="cards">
-    <div class="card">
-        <h2>{{ metrics | sum(attribute='total') }}</h2>
-        <p>Total Alerts</p>
+<div class="stat-strip mb-20">
+    <div class="stat-item">
+        <span class="stat-value">{{ metrics | sum(attribute='total') }}</span>
+        <span class="stat-label">Total Alerts</span>
     </div>
-    <div class="card highlight-high">
-        <h2>{{ metrics | sum(attribute='high_count') }}</h2>
-        <p>HIGH Alerts</p>
+    <div class="stat-item accent-red">
+        <span class="stat-value">{{ metrics | sum(attribute='high_count') }}</span>
+        <span class="stat-label">HIGH Severity</span>
     </div>
-    <div class="card highlight-new">
-        <h2>{{ metrics | sum(attribute='new_count') }}</h2>
-        <p>Unreviewed</p>
+    <div class="stat-item accent-orange">
+        <span class="stat-value">{{ metrics | sum(attribute='new_count') }}</span>
+        <span class="stat-label">Unreviewed</span>
     </div>
-    <div class="card highlight-escalated">
-        <h2>{{ metrics | sum(attribute='closed_count') }}</h2>
-        <p>Closed</p>
+    <div class="stat-item accent-green">
+        <span class="stat-value">{{ metrics | sum(attribute='tp_count') }}</span>
+        <span class="stat-label">True Positives</span>
     </div>
-</div>
-
-<div class="charts">
-    <div class="chart-box">
-        <canvas id="ruleChart"></canvas>
-    </div>
-    <div class="chart-box">
-        <canvas id="statusChart"></canvas>
+    <div class="stat-item accent-blue">
+        <span class="stat-value">{{ metrics | sum(attribute='fp_count') }}</span>
+        <span class="stat-label">False Positives</span>
     </div>
 </div>
 
-<table id="metricsTable">
-    <tr>
-        <th>Rule ID</th>
-        <th>Rule Name</th>
-        <th>Technique</th>
-        <th>Tactic</th>
-        <th>Total Fired</th>
-        <th>HIGH</th>
-        <th>Unreviewed</th>
-        <th>Closed</th>
-    </tr>
-    {% for row in metrics %}
-    <tr>
-        <td>{{ row["rule_id"] }}</td>
-        <td>{{ row["rule_name"] }}</td>
-        <td><span class="mitre-badge">{{ row["technique_id"] }}</span></td>
-        <td>{{ row["tactic"] }}</td>
-        <td>{{ row["total"] }}</td>
-        <td>{{ row["high_count"] }}</td>
-        <td>{{ row["new_count"] }}</td>
-        <td>{{ row["closed_count"] }}</td>
-    </tr>
-    {% endfor %}
-</table>
+<div class="charts-row mb-20" style="grid-template-columns: 2fr 1fr;">
+    <div class="chart-panel">
+        <div class="chart-panel-title">Rule Performance</div>
+        <canvas id="ruleFireChart" height="160"></canvas>
+    </div>
+    <div class="chart-panel">
+        <div class="chart-panel-title">Alert Status</div>
+        <canvas id="statusChart" height="160"></canvas>
+    </div>
+</div>
+
+<div class="section-header mb-12">
+    <span class="section-title">Per-Rule Breakdown</span>
+    <span class="section-count">{{ metrics | length }} rule{{ 's' if metrics | length != 1 else '' }}</span>
+</div>
+
+<div class="data-table-wrap">
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th>Rule ID</th>
+                <th>Rule Name</th>
+                <th>Technique</th>
+                <th>Tactic</th>
+                <th>Total</th>
+                <th>HIGH</th>
+                <th>Unreviewed</th>
+                <th>True Positive</th>
+                <th>False Positive</th>
+                <th>Benign</th>
+                <th>Precision</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for row in metrics %}
+            <tr>
+                <td class="mono text-orange">{{ row["rule_id"] }}</td>
+                <td>{{ row["rule_name"] }}</td>
+                <td><span class="mitre-tag">{{ row["technique_id"] }}</span></td>
+                <td class="text-muted">{{ row["tactic"] }}</td>
+                <td class="mono">{{ row["total"] }}</td>
+                <td class="mono text-red">{{ row["high_count"] }}</td>
+                <td class="mono text-muted">{{ row["new_count"] }}</td>
+                <td class="mono text-green">{{ row["tp_count"] }}</td>
+                <td class="mono text-red">{{ row["fp_count"] }}</td>
+                <td class="mono text-muted">{{ row["benign_count"] }}</td>
+                <td>
+                    {% if row["precision"] is not none %}
+                    <div class="precision-wrap">
+                        <div class="precision-bar">
+                            <div class="precision-fill
+                                {% if row['precision'] < 40 %}low
+                                {% elif row['precision'] < 70 %}medium
+                                {% endif %}"
+                                style="width: {{ row['precision'] }}%">
+                            </div>
+                        </div>
+                        <span class="mono" style="font-size:11px;">{{ row["precision"] }}%</span>
+                    </div>
+                    {% else %}
+                    <span class="text-muted mono" style="font-size:11px;">N/A</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 
 <script>
 const metricsData = {{ metrics | tojson }};

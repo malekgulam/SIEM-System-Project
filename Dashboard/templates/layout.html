@@ -1,25 +1,79 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>SIEM Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIEM Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
 
-<nav>
-    <span class="nav-brand">SIEM Platform</span>
-    <div class="nav-links">
-        <a href="{{ url_for('home') }}" class="nav-link">Dashboard</a>
-        <a href="{{ url_for('metrics') }}" class="nav-link">Metrics</a>
-        <a href="{{ url_for('coverage') }}" class="nav-link">Coverage</a>
-        <a href="{{ url_for('search') }}" class="nav-link">Search</a>
-    </div>
-</nav>
+<div class="app-shell">
 
-<div class="container">
-    {% block content %}
-    {% endblock %}
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <span class="brand-icon">◈</span>
+            <span class="brand-name">SIEM Platform</span>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section-label">Monitor</div>
+            <a href="{{ url_for('home') }}" class="nav-item {% if request.endpoint == 'home' %}active{% endif %}">
+                <span class="nav-icon">▦</span> Dashboard
+            </a>
+            <a href="{{ url_for('events_browser') }}" class="nav-item {% if request.endpoint == 'events_browser' %}active{% endif %}">
+                <span class="nav-icon">≡</span> Events
+            </a>
+
+            <div class="nav-section-label">Investigate</div>
+            <a href="{{ url_for('home') }}#alerts" class="nav-item {% if request.endpoint == 'alert_details' %}active{% endif %}">
+                <span class="nav-icon">⚑</span> Alerts
+            </a>
+            <a href="{{ url_for('cases_list') }}" class="nav-item {% if request.endpoint in ['cases_list', 'case_details'] %}active{% endif %}">
+                <span class="nav-icon">◻</span> Cases
+            </a>
+
+            <div class="nav-section-label">Detection</div>
+            <a href="{{ url_for('metrics') }}" class="nav-item {% if request.endpoint == 'metrics' %}active{% endif %}">
+                <span class="nav-icon">◈</span> Metrics
+            </a>
+            <a href="{{ url_for('coverage') }}" class="nav-item {% if request.endpoint == 'coverage' %}active{% endif %}">
+                <span class="nav-icon">▣</span> Coverage
+            </a>
+            <a href="{{ url_for('simulator') }}" class="nav-item {% if request.endpoint == 'simulator' %}active{% endif %}">
+                <span class="nav-icon">▷</span> Simulator
+            </a>
+
+            <div class="nav-section-label">Search</div>
+            <a href="{{ url_for('search') }}" class="nav-item {% if request.endpoint == 'search' %}active{% endif %}">
+                <span class="nav-icon">⌕</span> Search
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <form action="{{ url_for('run') }}" method="POST" style="margin-bottom:8px;">
+                <button type="submit" class="btn btn-primary" style="width:100%;font-size:11px;">
+                    ▷ Run Pipeline
+                </button>
+            </form>
+            <form action="{{ url_for('reset') }}" method="POST"
+                onsubmit="return confirm('Reset all data? This cannot be undone.')">
+                <button type="submit" class="reset-btn">↺ Reset Dataset</button>
+            </form>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <div class="page-content">
+            {% block content %}
+            {% endblock %}
+        </div>
+    </main>
+
 </div>
 
 <script src="{{ url_for('static', filename='script.js') }}"></script>

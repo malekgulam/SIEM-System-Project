@@ -1,0 +1,127 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<div class="page-header">
+    <span class="page-title">Event Browser</span>
+    <span class="page-subtitle">Latest 200 normalized events</span>
+</div>
+
+{% if not events %}
+<div class="empty-state">
+    No events stored yet. Run the pipeline from the dashboard first.
+</div>
+{% else %}
+
+<div class="stat-strip mb-20">
+    <div class="stat-item">
+        <span class="stat-value">{{ events | length }}</span>
+        <span class="stat-label">Events Loaded</span>
+    </div>
+    <div class="stat-item accent-orange">
+        <span class="stat-value">
+            {{ events | selectattr('event_type', 'equalto', 'failed_login') | list | length }}
+        </span>
+        <span class="stat-label">Failed Logins</span>
+    </div>
+    <div class="stat-item accent-green">
+        <span class="stat-value">
+            {{ events | selectattr('event_type', 'equalto', 'successful_login') | list | length }}
+        </span>
+        <span class="stat-label">Successful Logins</span>
+    </div>
+    <div class="stat-item accent-blue">
+        <span class="stat-value">
+            {{ events | selectattr('event_type', 'equalto', 'web_request') | list | length }}
+        </span>
+        <span class="stat-label">Web Requests</span>
+    </div>
+    <div class="stat-item accent-red">
+        <span class="stat-value">
+            {{ events | selectattr('event_type', 'equalto', 'sudo_command') | list | length }}
+        </span>
+        <span class="stat-label">Sudo Commands</span>
+    </div>
+</div>
+
+<div class="filter-bar mb-12">
+    <input type="text" id="eventSearch" placeholder="Search IP, user, event type...">
+    <select id="eventTypeFilter">
+        <option value="">All Event Types</option>
+        <option value="failed_login">Failed Login</option>
+        <option value="successful_login">Successful Login</option>
+        <option value="web_request">Web Request</option>
+        <option value="sudo_command">Sudo Command</option>
+        <option value="sudo_denied">Sudo Denied</option>
+        <option value="session_opened">Session Opened</option>
+        <option value="session_closed">Session Closed</option>
+        <option value="auth_failure">Auth Failure</option>
+    </select>
+</div>
+
+<div class="data-table-wrap">
+    <table class="data-table" id="eventTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Timestamp</th>
+                <th>Source IP</th>
+                <th>Event Type</th>
+                <th>User</th>
+                <th>Process</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for event in events %}
+            {% set detail_url = url_for('event_details', event_id=event['id']) %}
+            <tr class="event-row clickable"
+                onclick="window.location='{{ detail_url }}';"
+                data-ip="{{ event['source_ip'] or '' }}"
+                data-user="{{ event['user'] or '' }}"
+                data-type="{{ event['event_type'] or '' }}">
+                <td class="mono text-muted">{{ event["id"] }}</td>
+                <td class="mono text-muted">{{ event["timestamp"] }}</td>
+                <td class="mono">{{ event["source_ip"] or "-" }}</td>
+                <td>
+                    <span class="event-type-tag event-{{ event['event_type'] }}">
+                        {{ event["event_type"] or "-" }}
+                    </span>
+                </td>
+                <td class="mono">{{ event["user"] or "-" }}</td>
+                <td class="mono text-muted">{{ event["process"] or "-" }}</td>
+                <td class="mono text-muted">{{ event["status"] or "-" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endif %}
+
+<script>
+const eventSearch     = document.getElementById("eventSearch");
+const eventTypeFilter = document.getElementById("eventTypeFilter");
+const eventRows       = document.querySelectorAll(".event-row");
+
+function filterEvents() {
+    const query = eventSearch ? eventSearch.value.toLowerCase() : "";
+    const type  = eventTypeFilter ? eventTypeFilter.value : "";
+
+    eventRows.forEach(row => {
+        const matchQuery =
+            query === "" ||
+            row.dataset.ip.toLowerCase().includes(query)   ||
+            row.dataset.user.toLowerCase().includes(query) ||
+            row.dataset.type.toLowerCase().includes(query);
+
+        const matchType = type === "" || row.dataset.type === type;
+
+        row.style.display = (matchQuery && matchType) ? "" : "none";
+    });
+}
+
+if (eventSearch)     eventSearch.addEventListener("input", filterEvents);
+if (eventTypeFilter) eventTypeFilter.addEventListener("change", filterEvents);
+</script>
+
+{% endblock %}

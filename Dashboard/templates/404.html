@@ -1,10 +1,32 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<div style="text-align: center; margin-top: 80px;">
-    <h2 style="color: #ff4444;">404</h2>
-    <p style="color: #aaa;">Alert not found.</p>
-    <a href="{{ url_for('home') }}" class="back-link">← Back to Dashboard</a>
+<div style="display:flex; flex-direction:column; align-items:center; justify-content:center; min-height:60vh; text-align:center;">
+
+    <div style="font-family:var(--font-mono); font-size:72px; font-weight:500; color:var(--border-light); line-height:1; margin-bottom:16px;">
+        404
+    </div>
+
+    <div style="font-size:13px; color:var(--text-secondary); margin-bottom:8px;">
+        Resource not found
+    </div>
+
+    <div style="font-size:12px; color:var(--text-muted); font-family:var(--font-mono); margin-bottom:32px;">
+        The alert, case, or event you requested does not exist.
+    </div>
+
+    <div class="flex gap-8">
+        <a href="{{ url_for('home') }}" class="btn btn-primary btn-sm">
+            Dashboard
+        </a>
+        <a href="{{ url_for('cases_list') }}" class="btn btn-ghost btn-sm">
+            Cases
+        </a>
+        <a href="{{ url_for('events_browser') }}" class="btn btn-ghost btn-sm">
+            Events
+        </a>
+    </div>
+
 </div>
 
 {% endblock %}

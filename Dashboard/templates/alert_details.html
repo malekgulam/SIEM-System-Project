@@ -1,87 +1,202 @@
 {% extends "layout.html" %}
 {% block content %}
 
-<div class="details-header">
-    <h2>Alert Details</h2>
-    <span class="badge {{ alert['severity'] }}">{{ alert["severity"] }}</span>
-    <span class="badge {{ alert['status'] }}">{{ alert["status"] }}</span>
+<a href="{{ url_for('home') }}" class="back-link">← Back to Dashboard</a>
+
+<div class="page-header">
+    <span class="page-title">{{ alert["rule_name"] }}</span>
+    <div class="flex gap-8">
+        <span class="tag tag-{{ alert['severity'] }}">{{ alert["severity"] }}</span>
+        <span class="tag tag-{{ alert['status'] }}">{{ alert["status"] }}</span>
+        {% if alert["verdict"] %}
+        <span class="tag tag-{{ 'TP' if alert['verdict'] == 'TRUE POSITIVE' else ('FP' if alert['verdict'] == 'FALSE POSITIVE' else 'BEN') }}">
+            {{ alert["verdict"] }}
+        </span>
+        {% endif %}
+    </div>
 </div>
 
-<div class="details-grid">
+<div class="detail-grid">
 
-    <div class="details-card">
-        <h3>Detection Info</h3>
-        <table class="details-table">
-            <tr><td>Rule ID</td><td>{{ alert["rule_id"] }}</td></tr>
-            <tr><td>Rule Name</td><td>{{ alert["rule_name"] }}</td></tr>
-            <tr><td>Event Type</td><td>{{ alert["event_type"] }}</td></tr>
-            <tr><td>Timestamp</td><td>{{ alert["timestamp"] }}</td></tr>
+    <div class="detail-panel">
+        <div class="detail-panel-title">Detection Info</div>
+        <table class="kv-table">
+            <tr><td>Rule ID</td><td class="mono text-orange">{{ alert["rule_id"] }}</td></tr>
+            <tr><td>Event Type</td><td class="mono">{{ alert["event_type"] }}</td></tr>
+            <tr><td>Timestamp</td><td class="mono">{{ alert["timestamp"] }}</td></tr>
+            <tr><td>Risk Score</td>
+                <td>
+                    <div class="risk-bar-wrap">
+                        <div class="risk-bar">
+                            <div class="risk-bar-fill" data-score="{{ alert['risk_score'] or 0 }}"></div>
+                        </div>
+                        <span class="risk-value">{{ alert["risk_score"] or 0 }} / 100</span>
+                    </div>
+                </td>
+            </tr>
         </table>
     </div>
 
-    <div class="details-card">
-        <h3>Source Info</h3>
-        <table class="details-table">
-            <tr><td>Source IP</td><td>{{ alert["source_ip"] }}</td></tr>
-            <tr><td>User</td><td>{{ alert["user"] or "-" }}</td></tr>
+    <div class="detail-panel">
+        <div class="detail-panel-title">Source Info</div>
+        <table class="kv-table">
+            <tr><td>Source IP</td><td class="mono">{{ alert["source_ip"] or "-" }}</td></tr>
+            <tr><td>User</td><td class="mono">{{ alert["user"] or "-" }}</td></tr>
         </table>
     </div>
 
-    <div class="details-card mitre-card">
-        <h3>MITRE ATT&CK</h3>
-        <table class="details-table">
-            <tr><td>Technique ID</td><td><span class="mitre-badge">{{ alert["technique_id"] }}</span></td></tr>
+    <div class="detail-panel accent-left">
+        <div class="detail-panel-title">MITRE ATT&CK</div>
+        <table class="kv-table">
+            <tr><td>Technique</td><td><span class="mitre-tag">{{ alert["technique_id"] }}</span></td></tr>
             <tr><td>Tactic</td><td>{{ alert["tactic"] }}</td></tr>
         </table>
     </div>
 
 </div>
 
-<div class="details-card raw-card">
-    <h3>Raw Event</h3>
-    <pre class="raw-log">{{ alert["raw_event"] or "No raw event linked to this alert." }}</pre>
+<div class="detail-panel span-full mb-16">
+    <div class="detail-panel-title">Raw Event</div>
+    <pre class="raw-block">{{ alert["raw_event"] or "No raw event linked to this alert." }}</pre>
 </div>
 
 {% if events %}
-<div class="details-card">
-    <h3>Linked Events <span class="event-count">{{ events | length }} event{{ 's' if events | length != 1 else '' }}</span></h3>
-    <table class="details-table">
-        <tr>
-            <th>Timestamp</th>
-            <th>Source IP</th>
-            <th>Raw Log</th>
-        </tr>
-        {% for event in events %}
-        <tr>
-            <td>{{ event["timestamp"] }}</td>
-            <td>{{ event["source_ip"] }}</td>
-            <td><pre class="raw-log-inline">{{ event["raw_event"] }}</pre></td>
-        </tr>
-        {% endfor %}
-    </table>
+<div class="detail-panel span-full mb-16">
+    <div class="section-header mb-12">
+        <span class="section-title">Linked Events</span>
+        <span class="section-count">{{ events | length }} event{{ 's' if events | length != 1 else '' }}</span>
+    </div>
+    <div class="data-table-wrap">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Source IP</th>
+                    <th>Raw Log</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for event in events %}
+                <tr>
+                    <td class="mono text-muted">{{ event["timestamp"] }}</td>
+                    <td class="mono">{{ event["source_ip"] }}</td>
+                    <td><pre class="raw-block" style="padding:6px 10px;font-size:10px;">{{ event["raw_event"] }}</pre></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 </div>
 {% endif %}
 
-<div class="details-card">
-    <h3>Analyst Actions</h3>
-    <form action="/alert/{{ alert['id'] }}/update" method="POST">
-        <div class="form-group">
-            <label>Update Status</label>
-            <select name="status">
-                <option value="NEW" {% if alert["status"] == "NEW" %}selected{% endif %}>NEW</option>
-                <option value="INVESTIGATING" {% if alert["status"] == "INVESTIGATING" %}selected{% endif %}>INVESTIGATING</option>
-                <option value="ESCALATED" {% if alert["status"] == "ESCALATED" %}selected{% endif %}>ESCALATED</option>
-                <option value="CLOSED" {% if alert["status"] == "CLOSED" %}selected{% endif %}>CLOSED</option>
+<div class="ai-panel mb-16">
+    <div class="ai-panel-title">▷ AI Investigation Assistant</div>
+
+    <div class="form-row mb-12">
+        <div class="form-group" style="max-width:160px;">
+            <label class="form-label">Provider</label>
+            <select id="aiProvider" class="form-control">
+                <option value="anthropic">Anthropic (Claude)</option>
+                <option value="openai">OpenAI</option>
+                <option value="google">Google (Gemini)</option>
             </select>
         </div>
-        <div class="form-group">
-            <label>Analyst Notes</label>
-            <textarea name="notes" rows="4">{{ alert["notes"] or "" }}</textarea>
+        <div class="form-group" style="max-width:200px;">
+            <label class="form-label">Model</label>
+            <input type="text"
+                   id="aiModel"
+                   class="form-control mono"
+                   placeholder="e.g. gemini-2.5-flash">
         </div>
-        <button type="submit" class="btn-save">Save</button>
-    </form>
+        <div class="form-group">
+            <label class="form-label">API Key</label>
+            <input type="password"
+                   id="aiApiKey"
+                   class="form-control mono"
+                   placeholder="Paste your API key here — not stored anywhere">
+        </div>
+    </div>
+
+    <button class="btn btn-ghost btn-sm mb-12"
+            id="aiAssistBtn"
+            data-alert-id="{{ alert['id'] }}">
+        Analyze Alert
+    </button>
+
+    <div class="ai-loading" id="aiLoading" style="display:none;">
+        Analyzing alert context...
+    </div>
+    <div class="ai-output" id="aiOutput" style="display:none;"></div>
 </div>
 
-<a href="{{ url_for('home') }}" class="back-link">← Back to Dashboard</a>
+<script>
+document.getElementById("aiProvider").addEventListener("change", function() {
+    const hints = {
+        "anthropic": "e.g. claude-sonnet-4-6",
+        "openai":    "e.g. gpt-4o",
+        "google":    "e.g. gemini-2.5-flash"
+    };
+    document.getElementById("aiModel").placeholder = hints[this.value] || "Enter model name";
+});
+</script>
+
+<div class="detail-grid" style="grid-template-columns: 1fr 1fr;">
+
+    <div class="form-panel">
+        <div class="detail-panel-title mb-12">Update Alert</div>
+        <form action="/alert/{{ alert['id'] }}/update" method="POST">
+            <div class="form-group mb-12">
+                <label class="form-label">Status</label>
+                <select name="status" class="form-control">
+                    <option value="NEW"           {% if alert["status"] == "NEW" %}selected{% endif %}>NEW</option>
+                    <option value="INVESTIGATING" {% if alert["status"] == "INVESTIGATING" %}selected{% endif %}>INVESTIGATING</option>
+                    <option value="ESCALATED"     {% if alert["status"] == "ESCALATED" %}selected{% endif %}>ESCALATED</option>
+                    <option value="CLOSED"        {% if alert["status"] == "CLOSED" %}selected{% endif %}>CLOSED</option>
+                </select>
+            </div>
+            <div class="form-group mb-12">
+                <label class="form-label">Analyst Notes</label>
+                <textarea name="notes" class="form-control">{{ alert["notes"] or "" }}</textarea>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">Save</button>
+        </form>
+    </div>
+
+    <div class="form-panel">
+        <div class="detail-panel-title mb-12">Set Verdict</div>
+        <form action="/alert/{{ alert['id'] }}/verdict" method="POST">
+            <div class="form-group mb-12">
+                <label class="form-label">Verdict</label>
+                <select name="verdict" class="form-control">
+                    <option value="" disabled {% if not alert["verdict"] %}selected{% endif %}>Select verdict</option>
+                    <option value="TRUE POSITIVE"  {% if alert["verdict"] == "TRUE POSITIVE" %}selected{% endif %}>TRUE POSITIVE</option>
+                    <option value="FALSE POSITIVE" {% if alert["verdict"] == "FALSE POSITIVE" %}selected{% endif %}>FALSE POSITIVE</option>
+                    <option value="BENIGN"         {% if alert["verdict"] == "BENIGN" %}selected{% endif %}>BENIGN</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">Set Verdict</button>
+        </form>
+
+        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border);">
+            <div class="detail-panel-title mb-12">Case Management</div>
+            {% if case %}
+                <a href="{{ url_for('case_details', case_id=case['id']) }}" class="btn btn-ghost btn-sm">
+                    View Case #{{ case["id"] }}
+                </a>
+                <span class="tag tag-{{ case['status'] }}" style="margin-left:8px;">{{ case["status"] }}</span>
+            {% else %}
+                <form action="/alert/{{ alert['id'] }}/open-case" method="POST">
+                    <div class="form-group mb-12">
+                        <label class="form-label">Case Title (optional)</label>
+                        <input type="text" name="title" class="form-control"
+                               placeholder="Investigation — {{ alert['rule_name'] }}">
+                    </div>
+                    <button type="submit" class="btn btn-ghost btn-sm">Open Case</button>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+
+</div>
 
 {% endblock %}
