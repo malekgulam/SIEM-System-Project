@@ -1,60 +1,10 @@
 # SIEM System Project
 
-A Python and Flask-based **Security Information and Event Management (SIEM)** platform that simulates a Security Operations Center (SOC) workflow. The platform ingests Linux authentication and Apache access logs, normalizes them into a unified event model, executes MITRE ATT&CK-mapped detection rules, prioritizes alerts using risk scoring, and provides a web interface for event investigation, alert triage, case management, detection validation, and SOC reporting.
-
-The project is designed to demonstrate the core responsibilities of a SOC analyst and detection engineer, from log ingestion and detection development to investigation, analyst workflow, and reporting.
-
----
-
-# Table of Contents
-
-- [Highlights](#highlights)
-- [Architecture](#architecture)
-- [Screenshots](#screenshots)
-- [Features](#features)
-- [Supported Log Sources](#supported-log-sources)
-- [Detection Rules](#detection-rules)
-- [Risk Scoring](#risk-scoring)
-- [Project Structure](#project-structure)
-- [Database Schema](#database-schema)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Dashboard Routes](#dashboard-routes)
-- [Alert Workflow](#alert-workflow)
-- [Case Workflow](#case-workflow)
-- [Technology Stack](#technology-stack)
-
----
-
-# Highlights
-
-- End-to-end SOC workflow from log ingestion to investigation
-- Linux authentication and Apache access log ingestion
-- Event normalization into a unified event model
-- Five MITRE ATT&CK-mapped detection rules
-- Alert risk scoring based on multiple investigation factors
-- Event Browser for investigating normalized events independently of alerts
-- Alert-to-event relationship tracking
-- Analyst investigation workflow with status management and verdicts
-- Case management with investigation notes
-- Detection Rule Simulator using the same production detection pipeline
-- MITRE ATT&CK Navigator layer export
-- Detection metrics including True Positive, False Positive, and rule precision
-- AI-assisted investigation summaries
-- Flask dashboard with interactive charts and search
-- SQLite storage with duplicate prevention
-
----
-
-# Architecture
-
-The platform processes security telemetry through a multi-stage SOC pipeline.
-
-![Architecture](architecture/siem-architecture.png)
-
----
-
-Every normalized event is stored independently before detection runs. Detection rules generate alerts which maintain references to all contributing events while preserving the original raw log entry as investigation evidence.
+A Python and Flask application that simulates a Security Operations Center (SOC)
+workflow. It ingests Linux authentication and Apache access logs, normalizes them
+into a unified event model, runs MITRE ATT&CK-mapped detection rules, assigns risk
+scores to alerts, and provides a web interface for investigation, case management,
+and detection reporting.
 
 ---
 
@@ -62,477 +12,228 @@ Every normalized event is stored independently before detection runs. Detection 
 
 ### Dashboard
 
-The main SOC dashboard showing alert overview, risk scoring, charts, and recent alerts after processing a fresh dataset.
-
 ![Dashboard](Screenshots/dashboard.png)
 
----
+### Alert Investigation
 
-### Investigation Workflow
+![Alert Details](Screenshots/alert_details.png)
 
-| Events Browser | Alert Investigation |
-|----------------|---------------------|
-| ![Events](Screenshots/events.png) | ![Alert Details](Screenshots/alert_details.png) |
+### Events Browser
 
-| Cases | Case Details |
-|--------|--------------|
-| ![Cases](Screenshots/cases.png) | ![Case Details](Screenshots/case_details.png) |
+![Events](Screenshots/events.png)
 
----
+### Cases
 
-### Detection & Reporting
+![Cases](Screenshots/cases.png)
 
-| Detection Metrics | MITRE ATT&CK Coverage |
-|-------------------|-----------------------|
-| ![Metrics](Screenshots/metrics.png) | ![Coverage](Screenshots/coverage.png) |
+### Case Details
 
----
+![Case Details](Screenshots/case_details.png)
+
+### Detection Metrics
+
+![Metrics](Screenshots/metrics.png)
+
+### ATT&CK Coverage
+
+![Coverage](Screenshots/coverage.png)
 
 ### Search
-
-Search results for MITRE ATT&CK Technique **T1110**.
 
 ![Search](Screenshots/search.png)
 
 ---
 
-# Features
+## Architecture
 
-## Log Processing
+![Architecture](architecture/siem-architecture.png)
 
-- Read Linux authentication logs (`auth.log`)
-- Read Apache access logs (`access.log`)
-- Parse raw logs into structured events
-- Normalize different log sources into a unified event model
-- Store normalized events independently of detections
-- Generate synthetic log data for repeatable testing
+---
 
-## Detection Engine
+## Features
 
-- JSON-based rule repository
-- Centralized rule dispatcher
-- Five MITRE ATT&CK-mapped detection rules
-- Duplicate alert prevention
-- Alert-to-event relationship tracking
-- Raw log preservation for every alert
-- Detection metadata including Rule ID, Severity, Technique, and Tactic
+- Linux authentication and Apache access log ingestion
+- Event normalization into a unified event model
+- Five MITRE ATT&CK-mapped detection rules with a JSON rule repository
+- Alert risk scoring based on severity, timing, user context, and source IP history
+- Alert-to-event correlation — every alert links to the raw log events that triggered it
+- Event Browser for investigating normalized telemetry independently of alerts
+- Alert triage with status tracking, analyst notes, and verdict assignment
+- Case management with timestamped investigation notes
+- Detection Rule Simulator using the same production detection pipeline
+- True Positive, False Positive, and precision tracking per rule
+- MITRE ATT&CK coverage dashboard with Navigator layer export
+- AI-assisted investigation summaries supporting Anthropic, OpenAI, and Google
+
+---
+
+## Detection Rules
+
+| Rule ID | Rule Name | Technique | Tactic | Trigger |
+|---------|-----------|-----------|--------|---------|
+| BF-001 | SSH Brute Force | T1110 | Credential Access | 5+ failed SSH logins from one IP within 60 seconds |
+| OHL-001 | Off-Hours Login | T1078 | Defense Evasion | Successful login between 00:00 and 05:00 |
+| WS-001 | Web Scanning Activity | T1595 | Reconnaissance | 10+ HTTP 404 responses from one IP within 30 seconds |
+| PFS-001 | Privilege Escalation via sudo | T1548 | Privilege Escalation | Any sudo command execution |
+| CSF-001 | Credential Stuffing | T1110.004 | Credential Access | Failed logins against 3+ usernames from one IP within 60 seconds |
+
+Rules are stored in `Detection/rules.json` and include severity, rule type,
+technique, and tactic. Adding a new rule requires only a JSON file — no Python
+changes needed.
+
+---
 
 ## Risk Scoring
 
-Each generated alert receives a risk score between **0 and 100**.
+Every alert receives a risk score between 0 and 100 at detection time.
 
-Risk scoring considers multiple factors including:
+The score is calculated from four factors:
 
-- Detection severity
-- Off-hours activity
-- Privileged account involvement
-- Historical alert activity from the same source IP
+- **Base score** from alert severity — HIGH starts at 70, MEDIUM at 40, LOW at 15
+- **+15** if the alert occurred between 00:00 and 05:00
+- **+10** if the targeted user is root, admin, or administrator
+- **+10** if the source IP has 3 or more previous alerts in the database
 
-The calculated score is used throughout the dashboard to help prioritize investigations.
-
-## Event Investigation
-
-- Dedicated Event Browser
-- Event detail pages
-- Raw event inspection
-- Event type filtering
-- Search normalized events
-- Pivot directly from an event to related alerts using IP address or username
-
-## Alert Investigation
-
-- Alert status workflow
-- Analyst investigation notes
-- Verdict assignment
-- Raw log evidence
-- Linked triggering events
-- Visual risk scoring
-- MITRE ATT&CK mapping
-- AI-assisted investigation summaries
-
-## Case Management
-
-- Create investigation cases directly from alerts
-- One case per alert
-- Timestamped investigation notes
-- Independent case status tracking
-- Investigation verdicts
-- Automatic case closure timestamps
-- Linked alert context
-
-## Detection Validation
-
-- Detection Rule Simulator
-- Executes the same parsing, normalization, and detection pipeline used by the application
-- Rule-specific testing
-- Match and no-match validation
-- Example log lines for every rule
-- Risk score preview
-
-## Reporting & Analytics
-
-- Alert overview dashboard
-- Rule performance dashboard
-- Detection metrics
-- True Positive tracking
-- False Positive tracking
-- Rule precision calculations
-- MITRE ATT&CK coverage dashboard
-- ATT&CK Navigator layer export
-
-## Search
-
-Search alerts by:
-
-- Source IP
-- Username
-- Rule ID
-- Rule Name
-- MITRE ATT&CK Technique
-
-## AI Investigation Assistant
-
-Generate investigation guidance directly from an alert.
-
-The assistant uses alert context, detection metadata, and supporting evidence to generate investigation summaries and recommended analyst actions without modifying alert data.
+The score is capped at 100 and displayed throughout the dashboard to help
+prioritize which alerts to investigate first.
 
 ---
 
-# Supported Log Sources
-
-## Linux Authentication Logs (`auth.log`)
-
-Supported event types include:
-
-- Failed SSH logins
-- Successful SSH logins
-- Invalid user attempts
-- sudo command execution
-- su activity
-
-## Apache Access Logs (`access.log`)
-
-Supported event types include:
-
-- HTTP requests
-- Status codes
-- Requested URLs
-- Source IP addresses
-- Web scanning activity
-
----
-
-# Detection Rules
-
-| Rule ID | Rule Name | MITRE Technique | ATT&CK Tactic | Trigger |
-|---------|-----------|-----------------|---------------|---------|
-| BF-001 | SSH Brute Force | T1110 | Credential Access | Five or more failed SSH logins from one IP within 60 seconds |
-| OHL-001 | Off-Hours Login | T1078 | Defense Evasion | Successful login between 00:00 and 05:00 |
-| WS-001 | Web Scanning Activity | T1595 | Reconnaissance | Ten or more HTTP 404 responses from one IP within 30 seconds |
-| PFS-001 | Privilege Escalation via sudo | T1548 | Privilege Escalation | sudo command execution |
-| CSF-001 | Credential Stuffing | T1110.004 | Credential Access | Failed logins against three or more different usernames from one IP within 60 seconds |
-
-Detection rules are stored in `Detection/rules.json` and include metadata such as severity, rule type, MITRE ATT&CK technique, and ATT&CK tactic.
-
----
-
-# Risk Scoring
-
-Every generated alert receives a calculated **Risk Score (0–100)**.
-
-The score is derived from multiple investigation factors rather than a fixed severity level, including:
-
-- Alert severity
-- Off-hours activity
-- Privileged account involvement
-- Historical alert frequency from the same source IP
-
-Risk scores are displayed throughout the dashboard using both numeric values and visual indicators to assist alert prioritization.
-
----
-
-# Project Structure
+## Project Structure
 
 ```text
 SIEM-System-Project/
-├── architecture/
-├── Dashboard/
-├── Data/
-├── Detection/
-├── Generators/
-├── Ingestion/
-├── Parsing/
-├── screenshots/
-├── Storage/
-├── config.py
+├── config.py                # All paths and settings
 ├── requirements.txt
-├── README.md
-└── .gitignore
+├── Data/                    # Log files
+├── Generators/              # Synthetic log generators
+├── Ingestion/               # Log file reader
+├── Parsing/                 # Log parsers and event normalization
+├── Detection/               # Detection engine and rules.json
+├── Storage/                 # SQLite database operations
+└── Dashboard/               # Flask app, templates, and static files
 ```
-# Database Schema
-
-The platform stores normalized events, alerts, investigations, and supporting evidence in SQLite.
-
-| Table | Description |
-|------|-------------|
-| `events` | Stores every normalized event generated during log processing |
-| `alerts` | Detection results including severity, risk score, status, verdict, and MITRE ATT&CK mapping |
-| `alert_events` | Maps alerts to the events that triggered them |
-| `cases` | Investigation cases created from alerts |
-| `notes` | Timestamped analyst investigation notes |
-
-This schema separates telemetry from detections, allowing analysts to investigate raw events even when no alert is generated.
 
 ---
 
-# Installation
+## Database Schema
 
-Clone the repository.
+| Table | Description |
+|-------|-------------|
+| `events` | Every normalized event from log processing, stored independently of alerts |
+| `alerts` | Detection results with severity, risk score, status, verdict, and MITRE mapping |
+| `alert_events` | Maps each alert to the specific events that triggered it |
+| `cases` | Investigation cases created from alerts, with independent status tracking |
+| `notes` | Timestamped analyst notes attached to cases |
+
+Events and alerts are stored separately so analysts can investigate raw telemetry
+even when no detection rule triggers.
+
+---
+
+## Installation
 
 ```bash
 git clone <your-repository-url>
 cd SIEM-System-Project
-```
 
-Create a virtual environment.
-
-```bash
 python -m venv .venv
-```
 
-Activate the environment.
-
-**Windows**
-
-```bash
+# Windows
 .venv\Scripts\activate
-```
 
-**Linux / macOS**
-
-```bash
+# Linux / macOS
 source .venv/bin/activate
-```
 
-Install dependencies.
-
-```bash
 pip install -r requirements.txt
 ```
 
 ---
 
-# Usage
+## Usage
 
-## 1. Generate Sample Logs
+### Step 1 — Generate sample logs
 
 ```bash
 python Generators/auth_log_generator.py
 python Generators/access_log_generator.py
 ```
 
-The generators create realistic authentication and web activity containing both normal and suspicious events for repeatable testing.
-
----
-
-## 2. Start the Dashboard
+### Step 2 — Start the dashboard
 
 ```bash
 python Dashboard/app.py
 ```
 
----
+### Step 3 — Open the application
 
-## 3. Open the Application
-
-```
+```text
 http://127.0.0.1:5000
 ```
 
-When the application starts it automatically:
-
-- Reads configured log files
-- Parses raw log entries
-- Normalizes events
-- Stores normalized events
-- Executes all enabled detection rules
-- Calculates alert risk scores
-- Stores alerts and alert-to-event relationships
-- Prevents duplicate alerts
+Click **Run Pipeline** in the sidebar to ingest logs, run detection, and populate
+the dashboard. The pipeline can be run again after generating additional logs —
+duplicate events and alerts are automatically prevented.
 
 ---
 
-## Detection Rule Simulator
-
-The Detection Rule Simulator allows individual log lines to be tested without generating a full dataset.
-
-The simulator executes the same:
-
-- Ingestion
-- Parsing
-- Normalization
-- Detection
-
-pipeline used by the application, making it useful for validating detection rules and demonstrating rule behaviour.
-
----
-
-## Event Investigation
-
-The Event Browser allows analysts to investigate normalized events independently of generated alerts.
-
-From an event page analysts can:
-
-- Inspect normalized fields
-- View the original raw log
-- Filter by event type
-- Pivot directly to related alerts using source IP or username
-
----
-
-## Alert Investigation
-
-Each alert includes:
-
-- Severity
-- Risk score
-- Status
-- Verdict
-- MITRE ATT&CK mapping
-- Raw log evidence
-- Linked triggering events
-- Analyst notes
-- AI investigation assistance
-
-Alerts may also be converted into investigation cases.
-
----
-
-## Case Management
-
-Cases provide a dedicated investigation workflow.
-
-Each case includes:
-
-- Linked alert context
-- Investigation status
-- Verdict
-- Timestamped investigation notes
-- Automatic closure timestamp
-- Original evidence from the triggering alert
-
-Only one case can exist for each alert.
-
----
-
-## ATT&CK Navigator Export
-
-The Coverage page can export the project's MITRE ATT&CK coverage as a valid **ATT&CK Navigator Layer**.
-
-The exported JSON can be imported directly into MITRE ATT&CK Navigator to visualize implemented detection coverage.
-
----
-
-# Dashboard Routes
+## Dashboard Routes
 
 | Route | Description |
-|------|-------------|
-| `/` | Security dashboard showing alert overview, risk metrics, charts, and recent alerts |
-| `/alert/<id>` | Alert investigation including evidence, linked events, risk score, verdict, and analyst actions |
-| `/events` | Browse normalized events |
-| `/events/<id>` | View a single normalized event with pivot links |
-| `/cases` | Investigation case overview |
-| `/cases/<id>` | Case details, investigation notes, verdict, and linked alert |
-| `/metrics` | Detection performance dashboard including TP, FP, and precision metrics |
-| `/coverage` | MITRE ATT&CK coverage dashboard and Navigator export |
-| `/search` | Search alerts by IP, username, rule ID, rule name, or ATT&CK technique |
-| `/simulator` | Detection Rule Simulator |
-| `/navigator/export` | Export ATT&CK Navigator layer |
-| `/reset` | Reset the investigation database |
+|-------|-------------|
+| `/` | Alert dashboard with charts, risk scores, and alert queue |
+| `/events` | Browse all normalized events with type filtering |
+| `/events/<id>` | Single event detail with pivot links to related alerts |
+| `/alert/<id>` | Alert detail with evidence, linked events, verdict, and case management |
+| `/cases` | Investigation case list with status and verdict |
+| `/cases/<id>` | Case detail with notes, verdict, and linked alert context |
+| `/metrics` | Per-rule detection metrics including TP, FP, and precision |
+| `/coverage` | MITRE ATT&CK coverage dashboard |
+| `/search` | Search alerts by IP, rule ID, rule name, or technique |
+| `/simulator` | Test individual log lines against detection rules |
+| `/coverage/export` | Export ATT&CK Navigator layer JSON |
+| `/run` | Trigger the detection pipeline |
+| `/reset` | Clear all investigation data |
 
 ---
 
-# Alert Workflow
-
-Every generated alert follows the investigation lifecycle below.
+## Alert Lifecycle
 
 ```text
-NEW
- │
- ▼
-INVESTIGATING
- │
- ▼
-ESCALATED
- │
- ▼
-CLOSED
+Open Case → Investigation Notes → Verdict → Case Closed
 ```
 
-During investigation analysts can:
+Each case links to one alert and maintains its own status independently.
 
-- Review supporting evidence
-- Inspect linked events
-- Record investigation notes
-- Assign a verdict
-- Open an investigation case
-- Request AI investigation guidance
+Closing a case records the closure timestamp automatically.
 
 ---
 
-# Case Workflow
+## AI Investigation Assistant
 
-Cases extend the alert investigation process by tracking the overall investigation.
+The alert detail page includes an AI assistant that generates investigation
+guidance from alert context.
 
-```text
-Alert
-   │
-   ▼
-Open Case
-   │
-   ▼
-Investigation Notes
-   │
-   ▼
-Verdict
-   │
-   ▼
-Case Closed
-```
+It supports three providers:
 
-Each case maintains its own status while remaining linked to the originating alert.
+| Provider | Example Model |
+|----------|---------------|
+| Anthropic | claude-sonnet-4-6 |
+| OpenAI | gpt-4o |
+| Google | gemini-2.5-flash |
+
+The provider, model name, and API key are entered in the UI.
+
+No keys are stored anywhere — each request uses the key once and discards it.
 
 ---
 
-# Technology Stack
-
-## Backend
+## Technology Stack
 
 - Python 3.10+
 - Flask
 - SQLite3
-
-## Frontend
-
-- HTML5
-- CSS3
-- JavaScript
-- Chart.js
 - Jinja2
-
-## Security Frameworks
-
+- Chart.js
 - MITRE ATT&CK
-- MITRE ATT&CK Navigator
-
-## Project Components
-
-- JSON Rule Repository
-- Detection Engine
-- Event Normalization
-- Risk Scoring
-- Case Management
-- Detection Rule Simulator
-- AI Investigation Assistant
-
----
+- ATT&CK Navigator
